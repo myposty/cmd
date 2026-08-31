@@ -260,6 +260,13 @@ deploy() {  # $1 = archivo en dots, $2 = destino
 }
 say "Desplegando configuraciones..."
 deploy indigo-mate.omp.json "$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+# Prompts por tema (uno por cada tema de WezTerm) para que el prompt siga al tema.
+mkdir -p "$HOME/.config/oh-my-posh/prompts"
+for p in "$DOTS/prompts/"*.omp.json; do
+  [ -f "$p" ] && cp "$p" "$HOME/.config/oh-my-posh/prompts/"
+done
+ok "prompts por tema"
+echo "indigo" > ~/.cache/cmd-theme 2>/dev/null  # tema inicial
 deploy VERSION "$HOME/.config/cmd/VERSION"  # version instalada (para el aviso de update)
 # Refresca el aviso: al instalar, la version local pasa a ser la actual, asi el
 # banner de "hay version nueva" desaparece hasta que el repo suba otra.
