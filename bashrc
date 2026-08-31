@@ -133,21 +133,34 @@ if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
   fi
 fi
 
-# --- HINT al abrir: un tip rotativo de comandos/atajos ----------------------
+# --- Panel de comandos/atajos ------------------------------------------------
+# `help` lo muestra completo cuando quieras. Al abrir la terminal sale una
+# version compacta para que sepas que podes hacer.
+help() {
+  local C=$'\e[38;5;110m' K=$'\e[38;5;180m' D=$'\e[38;5;245m' R=$'\e[0m'
+  printf '\n  %sComandos%s\n' "$C" "$R"
+  printf '    %scd <nombre>%s    salta a una carpeta (la busca si no existe)\n' "$K" "$R"
+  printf '    %sz <nombre>%s     salto rapido a las carpetas que mas usas\n' "$K" "$R"
+  printf '    %shelp%s           muestra este panel\n' "$K" "$R"
+  printf '    %s__cmd_update%s   actualiza la terminal a la ultima version\n' "$K" "$R"
+  printf '\n  %sAtajos%s\n' "$C" "$R"
+  printf '    %sCtrl+F%s         buscador de carpetas (escribi y filtra en vivo)\n' "$K" "$R"
+  printf '    %sCtrl+R%s / %s↑%s    busca en tu historial de comandos\n' "$K" "$R" "$K" "$R"
+  printf '    %sCtrl+Shift+.%s   cambiar tema  ·  %sCtrl+Shift+,%s vuelve\n' "$K" "$R" "$K" "$R"
+  printf '    %sCtrl+Shift+P%s   menu de temas con vista previa\n' "$K" "$R"
+  printf '    %sCtrl+Shift+H%s   TODOS los atajos de WezTerm\n' "$K" "$R"
+  printf '    %sCtrl+Shift+D/E%s dividir la terminal en paneles\n' "$K" "$R"
+  printf '    %sF11 / F12%s      mas / menos transparencia\n' "$K" "$R"
+  printf '    %sCtrl+Shift+B%s   activa / desactiva el blur\n' "$K" "$R"
+  printf '  %sTip: escribi %shelp%s%s cuando quieras volver a ver esto.%s\n\n' "$D" "$K" "$R" "$D" "$R"
+}
 if [[ $- == *i* ]]; then
-  _tips=(
-    "Ctrl+Shift+.   cambia el tema en vivo (Ctrl+Shift+, vuelve)"
-    "Ctrl+F         buscador de carpetas: escribi y filtra en vivo"
-    "cd <nombre>    salta a una carpeta sin saber la ruta completa"
-    "z <nombre>     salto rapido a las carpetas que mas usas"
-    "Ctrl+R         busca en todo tu historial de comandos (atuin)"
-    "Ctrl+Shift+H   muestra TODOS los atajos de la terminal"
-    "F11 / F12      mas / menos transparencia de la ventana"
-    "Ctrl+Shift+B   activa o desactiva el blur del fondo"
-    "Ctrl+Shift+P   menu de temas con vista previa de colores"
-    "flecha arriba  autocompleta con el ultimo comando que empezaba igual"
-  )
-  printf '\e[38;5;60m  💡 %s\e[0m\n\n' "${_tips[$RANDOM % ${#_tips[@]}]}"
+  _C=$'\e[38;5;110m'; _K=$'\e[38;5;180m'; _D=$'\e[38;5;245m'; _R=$'\e[0m'
+  printf '  %sComandos:%s  %scd%s salta  ·  %sz%s salto rapido  ·  %sCtrl+F%s buscar  ·  %sCtrl+R%s historial\n' \
+    "$_C" "$_R" "$_K" "$_R" "$_K" "$_R" "$_K" "$_R" "$_K" "$_R"
+  printf '  %sTemas:%s     %sCtrl+Shift+.%s cambiar  ·  %sCtrl+Shift+P%s menu  ·  %sF11/F12%s opacidad\n' \
+    "$_C" "$_R" "$_K" "$_R" "$_K" "$_R" "$_K" "$_R"
+  printf '  %sEscribi %shelp%s%s para ver todo.%s\n\n' "$_D" "$_K" "$_R" "$_D" "$_R"
 fi
 
 # --- `cd` INTELIGENTE -------------------------------------------------------
