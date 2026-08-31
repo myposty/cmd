@@ -268,6 +268,10 @@ done
 ok "prompts por tema"
 echo "indigo" > ~/.cache/cmd-theme 2>/dev/null  # tema inicial
 deploy VERSION "$HOME/.config/cmd/VERSION"  # version instalada (para el aviso de update)
+# Guarda DONDE esta el repo (este install.sh) para que el auto-update haga git
+# pull ahi mismo, sin re-clonar ni preguntar. Es UPDATE, no install.
+mkdir -p "$HOME/.config/cmd"; printf '%s\n' "$DOTS" > "$HOME/.config/cmd/repo-path"
+ok "repo-path ($DOTS)"
 # Refresca el aviso: al instalar, la version local pasa a ser la actual, asi el
 # banner de "hay version nueva" desaparece hasta que el repo suba otra.
 rm -f ~/.cache/cmd-latest-version ~/.cache/cmd-version-checked 2>/dev/null

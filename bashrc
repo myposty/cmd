@@ -68,21 +68,39 @@ source ~/.cache/sh-init/atuin.sh 2>/dev/null
 _step "atuin"
 type -t _splash_end >/dev/null 2>&1 && _splash_end
 
-# --- Chequeo de version / update (no frena el arranque) ---------------------
-# Compara tu VERSION local con la del repo. Consulta GitHub UNA vez por dia (en
-# background, cacheado), y si hay una nueva version te avisa al abrir. Cero espera.
+# --- AUTO-UPDATE (no frena el arranque) -------------------------------------
+# Es UPDATE, no install: git pull en donde clonaste + reconstruye los prompts +
+# despliega los configs. NO reinstala herramientas, NO pregunta nada, y NO toca
+# tu config.lua (tus opciones). --ff-only NO destruye cambios locales: si hay
+# divergencia, no actualiza (no se pierde nada).
+__cmd_update() {
+  local repo; repo=$(cat ~/.config/cmd/repo-path 2>/dev/null)
+  [ -d "$repo/.git" ] || return 1
+  git -C "$repo" pull -q --ff-only 2>/dev/null || return 1     # no destruye nada
+  command -v node >/dev/null 2>&1 && ( cd "$repo" && node gen-prompts.mjs >/dev/null 2>&1 )  # reconstruye
+  mkdir -p ~/.config/oh-my-posh/prompts ~/.config/cmd
+  cp "$repo"/indigo-mate.omp.json ~/.config/oh-my-posh/ 2>/dev/null
+  cp "$repo"/prompts/*.omp.json   ~/.config/oh-my-posh/prompts/ 2>/dev/null
+  cp "$repo"/themes.lua  ~/themes.lua    2>/dev/null
+  cp "$repo"/wezterm.lua ~/.wezterm.lua  2>/dev/null
+  cp "$repo"/bashrc      ~/.bashrc       2>/dev/null
+  cp "$repo"/VERSION     ~/.config/cmd/VERSION 2>/dev/null   # ultimo: marca actualizado
+  rm -f ~/.cache/sh-init/omp.sh   # regenera el cache del prompt
+  return 0
+}
 if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
   _CMD_VERSION_URL="https://raw.githubusercontent.com/myposty/cmd/main/VERSION"
   _local_ver=$(cat ~/.config/cmd/VERSION 2>/dev/null || echo "0.0.0")
   _ver_cache=~/.cache/cmd-latest-version
   _ver_stamp=~/.cache/cmd-version-checked
-  # Si ya se aviso hoy, mostramos el aviso cacheado sin volver a consultar.
   _remote_ver=$(cat "$_ver_cache" 2>/dev/null)
+  # Hay update -> lo APLICA SOLO, en background, y avisa. Reabri para verlo.
   if [ -n "$_remote_ver" ] && [ "$_remote_ver" != "$_local_ver" ]; then
-    printf '\e[38;5;176m  ✨ Hay una version nueva de tu terminal: %s -> %s\e[0m\n' "$_local_ver" "$_remote_ver"
-    printf '\e[38;5;60m     Actualiza con:  cd ~/cmd && git pull && bash install.sh\e[0m\n\n'
+    printf '\e[38;5;176m  ✨ Actualizando terminal %s -> %s en segundo plano...\e[0m\n' "$_local_ver" "$_remote_ver"
+    printf '\e[38;5;60m     (reabri la terminal cuando termine para ver los cambios)\e[0m\n\n'
+    ( __cmd_update ) & disown 2>/dev/null
   fi
-  # Consulta a GitHub en background, una vez por dia, sin bloquear el prompt.
+  # Chequea GitHub una vez por dia, en background.
   if [ ! -f "$_ver_stamp" ] || [ "$(find "$_ver_stamp" -mtime +1 2>/dev/null)" ]; then
     ( curl -fsSL --max-time 3 "$_CMD_VERSION_URL" 2>/dev/null | tr -d '[:space:]' > "$_ver_cache.tmp" \
       && mv "$_ver_cache.tmp" "$_ver_cache" && touch "$_ver_stamp" ) &
