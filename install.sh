@@ -269,7 +269,9 @@ fi
 #  de consola de Windows, y WezTerm no la implementa (confirmado en su doc).
 #  Lo que SI sirve: un acceso directo en el escritorio para abrirlo de una.
 # ============================================================================
-if [ "$OS" = "windows" ] && [ -t 0 ]; then
+if [ "$OS" = "windows" ] && [ -t 0 ] && [ -f "$HOME/Desktop/fuse-termux.lnk" ]; then
+  skip "acceso directo (ya existe en el escritorio)"
+elif [ "$OS" = "windows" ] && [ -t 0 ]; then
   echo
   printf '\033[38;5;104m==>\033[0m Creo un acceso directo a WezTerm en el escritorio? [s/N] '
   read -r sc
@@ -333,7 +335,8 @@ for p in "$DOTS/prompts/"*.omp.json; do
   [ -f "$p" ] && cp "$p" "$HOME/.config/oh-my-posh/prompts/"
 done
 ok "prompts por tema"
-echo "indigo" > ~/.cache/cmd-theme 2>/dev/null  # tema inicial
+# tema inicial SOLO la 1ra vez: si ya elegiste uno, NO se pisa.
+[ -f ~/.cache/cmd-theme ] || echo "indigo" > ~/.cache/cmd-theme 2>/dev/null
 deploy VERSION "$HOME/.config/cmd/VERSION"  # version instalada (para el aviso de update)
 # Guarda DONDE esta el repo (este install.sh) para que el auto-update haga git
 # pull ahi mismo, sin re-clonar ni preguntar. Es UPDATE, no install.
