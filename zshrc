@@ -51,52 +51,31 @@ else
 fi
 _step "prompt"
 
-# --- Medidor de sistema (RAM/CPU) para el prompt Y la barra de WezTerm -------
-# Un daemon LIVIANO mide RAM/CPU cada ~2s y las deja en un archivo ("RAM CPU").
-# El prompt y WezTerm SOLO LEEN ese archivo -> se actualiza EN VIVO sin frenar
-# el Enter. Singleton por maquina (pidfile + kill -0).
-_posh_sys_file="$HOME/.cache/posh-sys"
-_posh_sys_pid="$HOME/.cache/posh-sys.pid"
-_posh_sys_probe() {
-  if [ -r /proc/stat ] && [ -r /proc/meminfo ]; then          # Linux (zsh en Linux)
-    local _ r1 r2 i1 i2 T1 T2 x dt di ram cpu
-    ram=$(awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} /^MemFree:/{f=$2} END{if(a=="")a=f; if(t>0)printf "%d",(t-a)*100/t}' /proc/meminfo)
-    read -r _ r1 < /proc/stat; set -- ${=r1}; i1=$4; T1=0; for x in "$@"; do T1=$((T1+x)); done
-    sleep 0.2
-    read -r _ r2 < /proc/stat; set -- ${=r2}; i2=$4; T2=0; for x in "$@"; do T2=$((T2+x)); done
-    dt=$((T2-T1)); di=$((i2-i1)); cpu=0; [ "$dt" -gt 0 ] && cpu=$(( (100*(dt-di))/dt ))
-    printf '%s %s' "$ram" "$cpu"
-  else                                                         # macOS: ps + vm_stat
-    local ncpu cpu ram
-    ncpu=$(sysctl -n hw.ncpu 2>/dev/null || echo 1)
-    cpu=$(ps -A -o %cpu 2>/dev/null | awk -v n="$ncpu" 'NR>1{s+=$1} END{if(n>0)printf "%d", s/n}')
-    ram=$(vm_stat 2>/dev/null | awk '
-      /Pages free/          {gsub(/\./,"",$3); free=$3}
-      /Pages active/        {gsub(/\./,"",$3); act=$3}
-      /Pages inactive/      {gsub(/\./,"",$3); inact=$3}
-      /Pages speculative/   {gsub(/\./,"",$3); spec=$3}
-      /Pages wired down/    {gsub(/\./,"",$4); wired=$4}
-      /occupied by compressor/ {gsub(/\./,"",$5); comp=$5}
-      END{ total=free+act+inact+spec+wired+comp; used=act+wired+comp; if(total>0)printf "%d", used*100/total }')
-    printf '%s %s' "$ram" "$cpu"
-  fi
-}
-if ! { [ -f "$_posh_sys_pid" ] && kill -0 "$(cat "$_posh_sys_pid" 2>/dev/null)" 2>/dev/null; }; then
-  ( zmodload zsh/system 2>/dev/null
-    echo "${sysparams[pid]:-$$}" > "$_posh_sys_pid"
-    while :; do
-      _posh_sys_probe > "$_posh_sys_file.tmp" 2>/dev/null && mv "$_posh_sys_file.tmp" "$_posh_sys_file" 2>/dev/null
-      sleep 2
-    done
-  ) >/dev/null 2>&1 &!
-fi
-# icono de CPU segun arquitectura: estatico, se detecta UNA vez
+# --- CPU en el PROMPT (snapshot por comando), SIN daemon --------------------
+# Un daemon en background muere al cerrar la pestana y deja el numero congelado.
+# En su lugar: el CPU del prompt es el % de uso ENTRE comandos (delta de
+# /proc/stat en Linux; instantaneo con ps en macOS, que no tiene /proc). RAM en
+# el prompt va nativa (oh-my-posh sysinfo). El medidor EN VIVO vive en la barra
+# de WezTerm, que lee /proc por su cuenta cada segundo (ver wezterm.lua).
 case "$(uname -m 2>/dev/null)" in
   x86_64|amd64|aarch64|arm64) export POSH_CPU_ICON=$'\U000F0EE0' ;;  # 64-bit (md-cpu_64_bit)
   *)                          export POSH_CPU_ICON=$'\U000F0EDF' ;;  # 32-bit (md-cpu_32_bit)
 esac
-# el prompt lee el CPU (2do campo) de ese archivo -> POSH_CPU, via hook precmd
-_posh_cpu() { export POSH_CPU="$(awk '{print $2}' "$_posh_sys_file" 2>/dev/null)"; }
+_posh_cpu() {
+  if [ -r /proc/stat ]; then                                  # Linux: delta entre comandos
+    local _ r idle total x pf=~/.cache/posh-cpu-prev pidle ptotal dt di
+    read -r _ r < /proc/stat; set -- ${=r}; idle=$4; total=0; for x in "$@"; do total=$((total+x)); done
+    if [ -f "$pf" ]; then
+      read -r pidle ptotal < "$pf" 2>/dev/null
+      dt=$((total-${ptotal:-0})); di=$((idle-${pidle:-0}))
+      [ "$dt" -gt 0 ] && export POSH_CPU=$(( (100*(dt-di))/dt ))
+    fi
+    echo "$idle $total" > "$pf" 2>/dev/null
+  else                                                        # macOS: instantaneo con ps
+    local ncpu; ncpu=$(sysctl -n hw.ncpu 2>/dev/null || echo 1)
+    export POSH_CPU="$(ps -A -o %cpu 2>/dev/null | awk -v n="$ncpu" 'NR>1{s+=$1} END{if(n>0)printf "%d",s/n}')"
+  fi
+}
 typeset -ga precmd_functions
 (( ${precmd_functions[(I)_posh_cpu]} )) || precmd_functions+=(_posh_cpu)
 

@@ -165,11 +165,11 @@ wezterm.on("format-tab-title", function(tab)
 end)
 
 -- ============================================================================
---  MEDIDOR EN VIVO — RAM / CPU / reloj en la barra (arriba a la derecha).
---  Se refresca SOLO cada ~3s desde el loop de WezTerm: no toca el shell ni tu
---  linea de input, y el sondeo corre FUERA del camino critico (por eso no
---  frena el Enter). Realtime a costo cero no existe: esto muestrea barato y
---  fuera del prompt. Se apaga con sys_meter=false en config.lua.
+--  MEDIDOR EN VIVO — RAM / CPU / reloj en la barra (borde de la ventana).
+--  Se refresca SOLO cada 1s desde el loop de WezTerm (status_update_interval):
+--  cambia estando QUIETO, sin tipear nada. Es el reloj/medidor VIVO; el del
+--  prompt es un snapshot por comando (un prompt no puede latir solo).
+--  Se apaga con sys_meter=false en config.lua.
 -- ============================================================================
 -- Guard: WezTerm ACUMULA los callbacks de wezterm.on en cada recarga de config
 -- (no los limpia). Sin esto, tras varios reloads corren N handlers viejos y uno
@@ -177,22 +177,36 @@ end)
 -- entre reloads: registramos el handler UNA sola vez por sesion.
 if user.sys_meter and not wezterm.GLOBAL.sys_meter_on then
   wezterm.GLOBAL.sys_meter_on = true
-  -- El daemon del shell (ver bashrc) mide RAM/CPU con /proc y las deja en
-  -- ~/.cache/posh-sys ("RAM CPU") cada ~2s. WezTerm LEE ese archivo con io.open
-  -- (verificado que funciona en Windows para lectura) en CADA tick de 1s: sin
-  -- spawnear procesos, sin bloquear, y RE-leyendo siempre -> nunca queda estatico.
-  local sys_file = wezterm.home_dir .. "/.cache/posh-sys"
+  -- SIN daemon (moria al cerrar la pestana y dejaba todo congelado). La barra
+  -- lee /proc DIRECTO cada segundo con un bash chico y calcula el delta de CPU
+  -- entre ticks -> RAM/CPU cambian solos, estando quieto. WezTerm es nativo (no
+  -- ve /proc), por eso corre bash; es una lectura instantanea (sin sleep).
+  local shell = wezterm.target_triple:find("windows") and user.windows_shell or "/bin/sh"
+  local probe = 'if [ -r /proc/stat ]; then head -n1 /proc/stat; grep -E "^MemTotal:|^MemAvailable:|^MemFree:" /proc/meminfo; fi'
+  local prev_idle, prev_total
 
   wezterm.on("update-status", function(window, _)
     local ram, cpu
-    local f = io.open(sys_file, "r")
-    if f then
-      local c = f:read("*a"); f:close()
-      if c then ram, cpu = c:match("(%d+)%s+(%d+)") end
+    local ok, _, out = pcall(wezterm.run_child_process, { shell, "-c", probe })
+    if ok and out and out ~= "" then
+      local cpuline = out:match("cpu%s+([%d ]+)")
+      if cpuline then
+        local total, idle, i = 0, 0, 0
+        for n in cpuline:gmatch("%d+") do i = i + 1; local v = tonumber(n); total = total + v; if i == 4 then idle = v end end
+        if prev_total and total > prev_total then
+          local dt, di = total - prev_total, idle - prev_idle
+          cpu = math.floor((100 * (dt - di)) / dt)
+        end
+        prev_idle, prev_total = idle, total
+      end
+      local mt = tonumber(out:match("MemTotal:%s+(%d+)"))
+      -- MSYS a veces no expone MemAvailable -> caemos a MemFree.
+      local ma = tonumber(out:match("MemAvailable:%s+(%d+)")) or tonumber(out:match("MemFree:%s+(%d+)"))
+      if mt and ma and mt > 0 then ram = math.floor((mt - ma) * 100 / mt) end
     end
     local parts = {}
-    if ram and ram ~= "" then table.insert(parts, "RAM " .. ram .. "%") end
-    if cpu and cpu ~= "" then table.insert(parts, "CPU " .. cpu .. "%") end
+    if ram then table.insert(parts, "RAM " .. ram .. "%") end
+    if cpu then table.insert(parts, "CPU " .. cpu .. "%") end
     table.insert(parts, os.date("%H:%M:%S"))
     window:set_right_status(wezterm.format({
       { Foreground = { Color = t.foreground } },

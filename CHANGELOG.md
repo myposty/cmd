@@ -1,3 +1,9 @@
+## 1.6.1
+- Fix del medidor en vivo: se eliminó el daemon (en Windows moría al cerrar la
+  pestaña y dejaba RAM/CPU congelados). Ahora la barra de WezTerm lee /proc por su
+  cuenta cada segundo y calcula el CPU por delta entre ticks: cambia estando quieto,
+  sin daemon que se muera. El CPU del prompt es un snapshot por comando
+
 ## 1.6.0
 - macOS (zsh) a paridad con Windows/Linux: mismo prompt, medidor RAM/CPU en vivo,
   cambio de tema en vivo, cd inteligente, Ctrl+F, help y auto-update
