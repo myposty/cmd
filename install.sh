@@ -217,19 +217,49 @@ configure_editor() {  # $1 = nombre, $2 = ruta del settings.json
     err "$name: necesito node para editar el settings.json de forma segura"
   fi
 }
+# True si el settings.json YA quedo apuntando a Git Bash + la fuente (idempotencia).
+_editor_configured() {
+  local f=$1
+  [ -f "$f" ] || return 1
+  if command -v node >/dev/null 2>&1; then
+    node -e '
+      const fs=require("fs"); let s={};
+      try{ s=JSON.parse(fs.readFileSync(process.argv[1],"utf8")||"{}"); }catch(e){ process.exit(1); }
+      const p=s["terminal.integrated.profiles.windows"];
+      const ok = s["terminal.integrated.defaultProfile.windows"]==="Git Bash"
+        && p && p["Git Bash"] && s["terminal.integrated.fontFamily"]==="CaskaydiaCove NF";
+      process.exit(ok?0:1);
+    ' "$f" 2>/dev/null
+  else
+    grep -q '"Git Bash"' "$f" 2>/dev/null && grep -q 'CaskaydiaCove NF' "$f" 2>/dev/null
+  fi
+}
 
 if [ "$OS" = "windows" ] && [ -t 0 ]; then
-  echo
-  printf '\033[38;5;104m==>\033[0m Configuro la terminal integrada de tus editores con Git Bash?\n'
-  printf '    [1] VS Code   [2] Cursor   [3] Ambos   [N] ninguno : '
-  read -r ed
-  case "$ed" in
-    1) configure_editor "VS Code" "$APPDATA/Code/User/settings.json" ;;
-    2) configure_editor "Cursor"  "$APPDATA/Cursor/User/settings.json" ;;
-    3) configure_editor "VS Code" "$APPDATA/Code/User/settings.json"
-       configure_editor "Cursor"  "$APPDATA/Cursor/User/settings.json" ;;
-    *) echo "   No toco los editores." ;;
-  esac
+  _ed_marker=~/.config/cmd/editors-asked
+  _ed_vscode="$APPDATA/Code/User/settings.json"
+  _ed_cursor="$APPDATA/Cursor/User/settings.json"
+  # "todo listo" = cada editor INSTALADO ya esta configurado (o no hay ninguno).
+  _ed_all_done=1
+  { [ -d "$(dirname "$_ed_vscode")" ] && ! _editor_configured "$_ed_vscode"; } && _ed_all_done=0
+  { [ -d "$(dirname "$_ed_cursor")" ] && ! _editor_configured "$_ed_cursor"; } && _ed_all_done=0
+  # Si ya se pregunto antes, o ya estan todos configurados -> NO molestar de nuevo.
+  if [ -f "$_ed_marker" ] || [ "$_ed_all_done" = 1 ]; then
+    skip "editores (ya configurados)"
+  else
+    echo
+    printf '\033[38;5;104m==>\033[0m Configuro la terminal integrada de tus editores con Git Bash?\n'
+    printf '    [1] VS Code   [2] Cursor   [3] Ambos   [N] ninguno : '
+    read -r ed
+    case "$ed" in
+      1) configure_editor "VS Code" "$_ed_vscode" ;;
+      2) configure_editor "Cursor"  "$_ed_cursor" ;;
+      3) configure_editor "VS Code" "$_ed_vscode"
+         configure_editor "Cursor"  "$_ed_cursor" ;;
+      *) echo "   No toco los editores." ;;
+    esac
+    mkdir -p ~/.config/cmd 2>/dev/null; touch "$_ed_marker" 2>/dev/null  # ya se pregunto: no repetir
+  fi
 fi
 
 # ============================================================================
