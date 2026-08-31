@@ -53,15 +53,20 @@ say "OS detectado: $OS | gestor: ${PKG:-ninguno} | shell: $SHELL_RC"
 # ============================================================================
 case "$PKG" in
   scoop)
-    if ! have scoop; then
+    # Chequeamos la CARPETA, no solo el comando: scoop puede estar instalado en
+    # disco pero fuera del PATH de esta sesion. Reinstalarlo falla ("~/scoop
+    # exists and is not empty"). Solo instalamos si NO existe la carpeta.
+    if ! have scoop && [ ! -d "$HOME/scoop/shims" ]; then
       say "Instalando scoop..."
       powershell.exe -NoProfile -Command "iwr -useb get.scoop.sh | iex" || { err "scoop fallo"; exit 1; }
+    else
+      skip "scoop"
     fi
-    # CLAVE: scoop recien instalado NO esta en el PATH de ESTA sesion. Sus shims
-    # viven en ~/scoop/shims; los agregamos ya, o todos los `scoop install` fallan.
+    # Aseguramos que sus shims esten en el PATH de ESTA sesion (recien instalado
+    # o ya existente), o todos los `scoop install` fallan.
     export PATH="$HOME/scoop/shims:$PATH"
-    hash -r 2>/dev/null  # olvida el cache de "comando no encontrado"
-    if ! have scoop; then err "scoop instalado pero no aparece en el PATH; abri una terminal nueva y reintenta"; exit 1; fi
+    hash -r 2>/dev/null
+    if ! have scoop; then err "scoop no aparece en el PATH; abri una terminal nueva y reintenta"; exit 1; fi
     scoop bucket list 2>/dev/null | grep -q "^extras"     || scoop bucket add extras     >/dev/null 2>&1
     scoop bucket list 2>/dev/null | grep -q "^nerd-fonts" || scoop bucket add nerd-fonts >/dev/null 2>&1 ;;
   brew)
