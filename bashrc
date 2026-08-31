@@ -38,7 +38,7 @@ type -t _step >/dev/null 2>&1 || _step() { :; }
 __settheme() {
   local t="${1:-indigo}"
   local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
-  [ -s "$f" ] || f="$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+  [ -s "$f" ] || f="$HOME/.config/oh-my-posh/prompts/indigo.omp.json"   # fallback con paleta completa (NO el template)
   echo "$t" > ~/.cache/cmd-theme 2>/dev/null                       # recuerda el tema
   eval "$(oh-my-posh init bash --config "$(cygpath -w "$f")")"     # RECARGA REAL
 }

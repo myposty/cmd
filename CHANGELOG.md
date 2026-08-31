@@ -1,3 +1,9 @@
+## 1.6.2
+- Fix: en el primer arranque algunos colores salian transparentes (el check, la
+  bateria) hasta reseleccionar un tema. El cache del prompt se generaba desde el
+  template, cuya paleta no tiene los colores nuevos (ok, seg-*). Ahora se genera
+  desde el prompt ya construido (paleta completa), y el fallback tambien
+
 ## 1.6.1
 - Fix del medidor en vivo: se eliminó el daemon (en Windows moría al cerrar la
   pestaña y dejaba RAM/CPU congelados). Ahora la barra de WezTerm lee /proc por su

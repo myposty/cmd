@@ -39,7 +39,7 @@ fi
 __settheme() {
   local t="${1:-indigo}"
   local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
-  [ -s "$f" ] || f="$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+  [ -s "$f" ] || f="$HOME/.config/oh-my-posh/prompts/indigo.omp.json"   # fallback con paleta completa (NO el template)
   echo "$t" > ~/.cache/cmd-theme 2>/dev/null
   eval "$(oh-my-posh init zsh --config "$f")"                       # RECARGA REAL
 }
