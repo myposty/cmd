@@ -205,9 +205,11 @@ local function apply_theme(win, th, name)
   }
   win:set_config_overrides(ov)
   -- Escribe el tema activo donde el .bashrc lo lee, asi el prompt cambia tambien.
+  -- io.open falla silencioso en Windows; run_child_process con cmd SI escribe.
+  -- "echo x>file" sin espacio antes de > para no guardar un espacio de mas.
   if name then
-    local f = io.open(home .. "/.cache/cmd-theme", "w")
-    if f then f:write(name); f:close() end
+    local target = home:gsub("/", "\\") .. "\\.cache\\cmd-theme"
+    wezterm.background_child_process({ "cmd", "/c", "echo|set /p=" .. name .. ">" .. target })
   end
 end
 

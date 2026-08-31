@@ -33,7 +33,11 @@ type -t _step >/dev/null 2>&1 || _step() { :; }
 # --- PROMPT (oh-my-posh) — sigue al tema activo ------------------------------
 # El tema activo se guarda en ~/.cache/cmd-theme (lo escribe WezTerm al cambiarlo).
 # Cada prompt usa el .omp.json de ESE tema, asi el prompt cambia con el tema.
-_omp_theme() { cat ~/.cache/cmd-theme 2>/dev/null || echo "indigo"; }
+# Lee el tema activo, quitando espacios/saltos que cmd pueda haber dejado.
+_omp_theme() {
+  local t; t=$(cat ~/.cache/cmd-theme 2>/dev/null | tr -d ' \r\n\t')
+  [ -n "$t" ] && echo "$t" || echo "indigo"
+}
 _omp_config() {
   local t; t=$(_omp_theme)
   local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
