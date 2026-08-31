@@ -198,60 +198,52 @@ if [ "$OS" = "windows" ] && [ -t 0 ]; then
 fi
 
 # ============================================================================
-#  3d. WezTerm como terminal POR DEFECTO del sistema (PREGUNTA). Asi al abrir
-#      una consola nueva de Windows se lanza WezTerm en vez de la consola vieja.
+#  3d. Acceso rapido a WezTerm (PREGUNTA).
+#  NOTA: WezTerm NO puede ser el "terminal predeterminado" de Windows. Esa lista
+#  (Config > Terminal) es exclusiva de apps que implementan la API de delegacion
+#  de consola de Windows, y WezTerm no la implementa (confirmado en su doc).
+#  Lo que SI sirve: un acceso directo en el escritorio para abrirlo de una.
 # ============================================================================
-if [ -t 0 ]; then
+if [ "$OS" = "windows" ] && [ -t 0 ]; then
   echo
-  printf '\033[38;5;104m==>\033[0m Pongo WezTerm como tu terminal por defecto del sistema? [s/N] '
+  printf '\033[38;5;104m==>\033[0m Creo un acceso directo a WezTerm en el escritorio? [s/N] '
+  read -r sc
+  case "$sc" in
+    s|S|y|Y)
+      wt=""
+      for p in "$HOME/scoop/apps/wezterm-nightly/current/wezterm-gui.exe" \
+               "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe"; do
+        [ -f "$p" ] && { wt="$p"; break; }
+      done
+      if [ -n "$wt" ]; then
+        wt_win=$(cygpath -w "$wt" 2>/dev/null || echo "$wt")
+        desktop=$(cygpath -w "$HOME/Desktop" 2>/dev/null || echo "$HOME/Desktop")
+        powershell.exe -NoProfile -Command "
+          \$s = (New-Object -ComObject WScript.Shell).CreateShortcut('$desktop\\fuse-termux.lnk');
+          \$s.TargetPath = '$wt_win'; \$s.Arguments = 'start';
+          \$s.WorkingDirectory = '$(cygpath -w "$HOME")'; \$s.Save()
+        " >/dev/null 2>&1 && ok "Acceso directo 'fuse-termux' en el escritorio" \
+          || err "No pude crear el acceso directo"
+      else
+        err "No encontre wezterm-gui"
+      fi ;;
+    *) echo "   Sin acceso directo. Abrilo con: wezterm-gui" ;;
+  esac
+elif [ "$OS" = "linux" ] && [ -t 0 ]; then
+  # En Linux el concepto SI existe (x-terminal-emulator en Debian/Ubuntu).
+  echo
+  printf '\033[38;5;104m==>\033[0m Pongo WezTerm como x-terminal-emulator por defecto? [s/N] '
   read -r def
   case "$def" in
     s|S|y|Y)
-      case "$OS" in
-        windows)
-          # El WezTerm PORTABLE (scoop) NO aparece en la lista de "terminal por
-          # defecto" de Windows: solo las apps instaladas por MSI se registran
-          # como proveedor de consola. Asi que reinstalamos por MSI.
-          if [ -d "$HOME/scoop/apps/wezterm-nightly" ] || [ -d "$HOME/scoop/apps/wezterm" ]; then
-            say "Tenes el WezTerm portable (scoop); para ser terminal por defecto hace falta el MSI."
-            printf '    Reinstalo WezTerm con el instalador oficial (MSI)? [s/N] '
-            read -r msi
-            case "$msi" in
-              s|S|y|Y)
-                say "Descargando WezTerm MSI (setup oficial)..."
-                url="https://github.com/wez/wezterm/releases/download/nightly/WezTerm-nightly-setup.exe"
-                out="$TEMP/WezTerm-setup.exe"
-                if curl -fsSL --max-time 120 "$url" -o "$out" 2>/dev/null; then
-                  say "Ejecutando el instalador (segui los pasos en pantalla)..."
-                  "$out" //quiet 2>/dev/null || "$out"  # el MSI se registra solo como terminal
-                  ok "WezTerm instalado por MSI. Ahora aparece en:"
-                  echo "     Configuracion > Privacidad y seguridad > Para desarrolladores >"
-                  echo "     Terminal > eleji 'WezTerm'."
-                  echo "   Opcional: podes quitar el portable con  scoop uninstall wezterm-nightly"
-                else
-                  err "No pude descargar el MSI. Bajalo a mano: https://wezterm.org/install/windows.html"
-                fi ;;
-              *) echo "   Sigo con el portable. No sera terminal por defecto de Windows." ;;
-            esac
-          else
-            # No hay portable; suponemos que ya tiene el MSI o lo instalara.
-            echo "   Para ponerlo por defecto: Configuracion > Privacidad > Para"
-            echo "   desarrolladores > Terminal > WezTerm."
-          fi ;;
-        macos)
-          echo "   En macOS no hay 'terminal por defecto' del sistema como en Windows."
-          echo "   WezTerm ya esta en /Applications; anclalo al Dock para tenerlo a mano." ;;
-        linux)
-          # En Linux se hace via update-alternatives (x-terminal-emulator) en Debian/Ubuntu.
-          if command -v update-alternatives >/dev/null 2>&1 && command -v wezterm >/dev/null 2>&1; then
-            sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(command -v wezterm)" 50 >/dev/null 2>&1 \
-              && sudo update-alternatives --set x-terminal-emulator "$(command -v wezterm)" >/dev/null 2>&1 \
-              && ok "WezTerm como x-terminal-emulator por defecto" \
-              || echo "   Configuralo en tu entorno de escritorio (Settings > Default Applications)."
-          else
-            echo "   Configuralo en tu entorno de escritorio (Settings > Default Applications)."
-          fi ;;
-      esac ;;
+      if command -v update-alternatives >/dev/null 2>&1 && command -v wezterm >/dev/null 2>&1; then
+        sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(command -v wezterm)" 50 >/dev/null 2>&1 \
+          && sudo update-alternatives --set x-terminal-emulator "$(command -v wezterm)" >/dev/null 2>&1 \
+          && ok "WezTerm como x-terminal-emulator por defecto" \
+          || echo "   Configuralo en Settings > Default Applications."
+      else
+        echo "   Configuralo en Settings > Default Applications."
+      fi ;;
     *) echo "   Dejo tu terminal por defecto como esta." ;;
   esac
 fi
