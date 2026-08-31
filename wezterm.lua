@@ -204,15 +204,12 @@ local function apply_theme(win, th, name)
     ansi = th.ansi, brights = th.brights,
   }
   win:set_config_overrides(ov)
-  -- Escribe el tema activo donde el .bashrc lo lee, asi el prompt cambia tambien.
-  -- io.open falla silencioso en Windows; run_child_process con cmd SI escribe.
+  -- El PROMPT: le mandamos al shell el comando __settheme, que re-inicializa
+  -- oh-my-posh con el tema nuevo (recarga REAL). WezTerm no escribe archivos
+  -- (io.open falla en Windows); solo manda el comando y bash hace el resto.
   if name then
-    -- run_child_process (bloqueante) SI escribe; background_child_process NO.
-    local target = home:gsub("/", "\\") .. "\\.cache\\cmd-theme"
-    wezterm.run_child_process({ "cmd", "/c", "echo " .. name .. "> " .. target })
-    -- Refresca el prompt YA: Enter en linea vacia para que oh-my-posh redibuje.
     local pane = win:active_pane()
-    if pane then pane:send_text("\n") end
+    if pane then pane:send_text("__settheme " .. name .. "\n") end
   end
 end
 

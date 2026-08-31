@@ -30,32 +30,27 @@ fi
 # Helper no-op si no hay splash (shell no interactivo), para no romper las llamadas.
 type -t _step >/dev/null 2>&1 || _step() { :; }
 
-# --- PROMPT (oh-my-posh) — sigue al tema activo ------------------------------
-# El tema activo se guarda en ~/.cache/cmd-theme (lo escribe WezTerm al cambiarlo).
-# Cada prompt usa el .omp.json de ESE tema, asi el prompt cambia con el tema.
-# Lee el tema activo, quitando espacios/saltos que cmd pueda haber dejado.
-_omp_theme() {
-  local t; t=$(cat ~/.cache/cmd-theme 2>/dev/null | tr -d ' \r\n\t')
-  [ -n "$t" ] && echo "$t" || echo "indigo"
-}
-_omp_config() {
-  local t; t=$(_omp_theme)
+# --- PROMPT (oh-my-posh) — cambia de tema con recarga REAL -------------------
+# oh-my-posh carga su config UNA vez por sesion; cambiar POSH_CONFIG a mitad NO
+# lo obliga a releer. La forma que SI funciona es re-ejecutar `oh-my-posh init`
+# con el config del tema nuevo: eso reinstala el prompt con esos colores.
+# WezTerm, al cambiar el tema, manda "__settheme <nombre>" a esta terminal.
+__settheme() {
+  local t="${1:-indigo}"
   local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
   [ -s "$f" ] || f="$HOME/.config/oh-my-posh/indigo-mate.omp.json"
-  # oh-my-posh en Windows necesita la ruta en formato Windows (C:\...), NO /c/...
-  # Sin esto, cambiar el tema deja el prompt en indigo porque no lee el archivo.
-  cygpath -w "$f" 2>/dev/null || echo "$f"
+  echo "$t" > ~/.cache/cmd-theme 2>/dev/null                       # recuerda el tema
+  eval "$(oh-my-posh init bash --config "$(cygpath -w "$f")")"     # RECARGA REAL
 }
-# oh-my-posh lee POSH_CONFIG en CADA prompt, asi que cambiar esa variable cambia
-# el prompt EN VIVO, sin reiniciar el shell. El init se cachea una vez.
-[ -s ~/.cache/sh-init/omp.sh ] || oh-my-posh init bash --print --config "$(_omp_config)" > ~/.cache/sh-init/omp.sh 2>/dev/null
-source ~/.cache/sh-init/omp.sh 2>/dev/null
-# En cada prompt, sincroniza POSH_CONFIG con el tema activo (barato: un cat).
-_omp_sync_theme() {
-  local want; want="$(_omp_config)"
-  [ "$want" != "$POSH_CONFIG" ] && export POSH_CONFIG="$want"
-}
-PROMPT_COMMAND="_omp_sync_theme;${PROMPT_COMMAND:-}"
+
+# Al abrir la terminal: usar el ultimo tema elegido (o indigo). El cache rapido
+# sirve para indigo; para otro tema se re-inicializa (una vez, al abrir).
+_startup_theme=$(cat ~/.cache/cmd-theme 2>/dev/null | tr -d ' \r\n\t'); : "${_startup_theme:=indigo}"
+if [ "$_startup_theme" = "indigo" ] && [ -s ~/.cache/sh-init/omp.sh ]; then
+  source ~/.cache/sh-init/omp.sh 2>/dev/null
+else
+  __settheme "$_startup_theme"
+fi
 _step "prompt"
 
 # --- Historial grande, sin duplicados. --------------------------------------
