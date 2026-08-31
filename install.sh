@@ -78,11 +78,25 @@ pkg_install() {
   have "$cmd" && ok "$cmd" || err "$cmd (instalar a mano: paquete '$name')"
 }
 say "Instalando herramientas..."
-#            cmd      scoop    brew     apt      dnf      pacman
-pkg_install  atuin    atuin    atuin    atuin    atuin    atuin
-pkg_install  zoxide   zoxide   zoxide   zoxide   zoxide   zoxide
-pkg_install  eza      eza      eza      eza      eza      eza
-pkg_install  wezterm  wezterm  wezterm  wezterm  wezterm  wezterm
+#            cmd      scoop    brew     apt         dnf      pacman
+pkg_install  atuin    atuin    atuin    atuin       atuin    atuin
+pkg_install  zoxide   zoxide   zoxide   zoxide      zoxide   zoxide
+pkg_install  eza      eza      eza      eza         eza      eza
+pkg_install  fzf      fzf      fzf      fzf         fzf      fzf       # buscador de cd / Ctrl+F
+pkg_install  fd       fd       fd       fd-find     fd-find  fd        # busqueda rapida de carpetas
+
+# WezTerm: en Windows usamos el NIGHTLY (el estable de scoop es viejo y NO tiene
+# el blur Acrylic). En Mac/Linux el paquete normal ya es reciente.
+if have wezterm; then skip "wezterm"
+else
+  say "Instalando wezterm..."
+  case "$OS" in
+    windows) scoop bucket add versions >/dev/null 2>&1; scoop install wezterm-nightly >/dev/null 2>&1 ;;
+    macos)   brew install --cask wezterm >/dev/null 2>&1 ;;
+    linux)   pkg_install wezterm wezterm wezterm wezterm wezterm wezterm ;;
+  esac
+  have wezterm && ok "wezterm" || err "wezterm (ver https://wezterm.org)"
+fi
 
 # oh-my-posh: instalador propio por plataforma.
 if have oh-my-posh; then skip "oh-my-posh"
@@ -149,6 +163,29 @@ rm -f ~/.cache/sh-init/omp.$ext ~/.cache/sh-init/atuin.$ext ~/.cache/sh-init/zox
 have oh-my-posh && oh-my-posh init "$OMP_SHELL" $([ "$OMP_SHELL" = bash ] && echo --print) --config ~/.config/oh-my-posh/indigo-mate.omp.json > ~/.cache/sh-init/omp.$ext    2>/dev/null && ok "cache omp"
 have atuin      && atuin init  "$OMP_SHELL" > ~/.cache/sh-init/atuin.$ext  2>/dev/null && ok "cache atuin"
 have zoxide     && zoxide init "$OMP_SHELL" > ~/.cache/sh-init/zoxide.$ext 2>/dev/null && ok "cache zoxide"
+
+# ============================================================================
+#  5b. Sembrar zoxide con las carpetas de proyecto (para que `z` y el cd/Ctrl+F
+#      encuentren algo desde la 1ra terminal, sin esperar a que navegues).
+# ============================================================================
+if have zoxide; then
+  say "Sembrando zoxide con tus carpetas de proyecto..."
+  seed_roots=( ~/Desktop ~/Documents ~/Projects ~/proyect ~/dev ~/code )
+  seeded=0
+  finder="find"
+  have fd && finder="fd"
+  for root in "${seed_roots[@]}"; do
+    [ -d "$root" ] || continue
+    if [ "$finder" = "fd" ]; then
+      while IFS= read -r dir; do zoxide add "$dir" 2>/dev/null && seeded=$((seeded+1)); done \
+        < <(fd -t d -d 4 . "$root" 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build|/\.next|vendor")
+    else
+      while IFS= read -r dir; do zoxide add "$dir" 2>/dev/null && seeded=$((seeded+1)); done \
+        < <(find "$root" -maxdepth 4 -type d 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build")
+    fi
+  done
+  ok "zoxide sembrado ($seeded carpetas)"
+fi
 
 # ============================================================================
 #  6. Cierre.
