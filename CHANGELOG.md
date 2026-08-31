@@ -1,3 +1,7 @@
+## 1.4.0
+- Separadores en triangulo (powerline clasico), puntas redondas en extremos
+- Fix: el prompt se ve bien desde el primer arranque en un equipo nuevo
+
 ## 1.3.0
 - Tema nuevo: Monokai Dark Soda (verde lima, magenta, naranja)
 

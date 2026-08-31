@@ -28,7 +28,7 @@
         {
           "background": "p:danger",
           "foreground": "p:text-light",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "style": "powerline",
           "template": "  ",
           "type": "root"
@@ -36,7 +36,7 @@
         {
           "background": "p:indigo-mid",
           "foreground": "p:text-light",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "home_icon": "~",
             "style": "full"
@@ -54,7 +54,7 @@
             "{{ if gt .Behind 0 }}p:indigo{{ end }}"
           ],
           "foreground": "p:text-dark",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "branch_icon": " ",
             "fetch_status": true,
@@ -74,7 +74,7 @@
           "background": "p:indigo",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "fetch_version": true
           },
@@ -86,7 +86,7 @@
           "background": "p:indigo",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "fetch_version": true
           },
@@ -98,7 +98,7 @@
           "background": "p:indigo",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "display_mode": "files",
             "fetch_virtual_env": false
@@ -111,7 +111,7 @@
           "background": "p:amber-muted",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "style": "powerline",
           "template": " {{ .FormattedMs }}  ",
           "options": {
@@ -130,7 +130,7 @@
             "discharging_icon": " "
           },
           "style": "powerline",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}%{{ end }} ",
           "type": "battery"
         },
@@ -141,7 +141,7 @@
           ],
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "always_enabled": true
           },

@@ -299,7 +299,11 @@ say "Regenerando caches de init (limpia los viejos primero)..."
 mkdir -p ~/.cache/sh-init
 ext="sh"; [ "$OMP_SHELL" = "zsh" ] && ext="zsh"
 rm -f ~/.cache/sh-init/omp.$ext ~/.cache/sh-init/atuin.$ext ~/.cache/sh-init/zoxide.$ext 2>/dev/null
-have oh-my-posh && oh-my-posh init "$OMP_SHELL" $([ "$OMP_SHELL" = bash ] && echo --print) --config ~/.config/oh-my-posh/indigo-mate.omp.json > ~/.cache/sh-init/omp.$ext    2>/dev/null && ok "cache omp"
+# En Windows oh-my-posh necesita la ruta C:\... (no /c/...) o el prompt no
+# renderiza en el primer arranque. Convertimos con cygpath, igual que __settheme.
+_omp_cfg=~/.config/oh-my-posh/indigo-mate.omp.json
+[ "$OS" = "windows" ] && _omp_cfg=$(cygpath -w "$_omp_cfg" 2>/dev/null || echo "$_omp_cfg")
+have oh-my-posh && oh-my-posh init "$OMP_SHELL" $([ "$OMP_SHELL" = bash ] && echo --print) --config "$_omp_cfg" > ~/.cache/sh-init/omp.$ext    2>/dev/null && ok "cache omp"
 have atuin      && atuin init  "$OMP_SHELL" > ~/.cache/sh-init/atuin.$ext  2>/dev/null && ok "cache atuin"
 have zoxide     && zoxide init "$OMP_SHELL" > ~/.cache/sh-init/zoxide.$ext 2>/dev/null && ok "cache zoxide"
 

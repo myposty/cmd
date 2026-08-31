@@ -30,7 +30,7 @@
         {
           "background": "p:danger",
           "foreground": "#ffffff",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "style": "powerline",
           "template": "  ",
           "type": "root"
@@ -38,7 +38,7 @@
         {
           "background": "p:indigo-mid",
           "foreground": "#2E3440",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "home_icon": "~",
             "style": "full"
@@ -56,7 +56,7 @@
             "{{ if gt .Behind 0 }}p:seg-git-ahead{{ end }}"
           ],
           "foreground": "#2E3440",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "branch_icon": " ",
             "fetch_status": true,
@@ -76,7 +76,7 @@
           "background": "p:indigo",
           "foreground": "#2E3440",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "fetch_version": true
           },
@@ -88,7 +88,7 @@
           "background": "p:indigo",
           "foreground": "#2E3440",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "fetch_version": true
           },
@@ -100,7 +100,7 @@
           "background": "p:indigo",
           "foreground": "#2E3440",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "display_mode": "files",
             "fetch_virtual_env": false
@@ -113,7 +113,7 @@
           "background": "p:amber-muted",
           "foreground": "#2E3440",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "style": "powerline",
           "template": " {{ .FormattedMs }}  ",
           "options": {
@@ -132,7 +132,7 @@
             "discharging_icon": " "
           },
           "style": "powerline",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}%{{ end }} ",
           "type": "battery"
         },
@@ -143,7 +143,7 @@
           ],
           "foreground": "#D8DEE9",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "always_enabled": true
           },
