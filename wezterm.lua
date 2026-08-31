@@ -148,6 +148,17 @@ config.max_fps = 120
 config.animation_fps = 60
 config.front_end = "WebGpu"
 
+-- --- Nombre de la terminal --------------------------------------------------
+-- Titulo de la ventana y de las pestanas: "fuse-termux" en vez de "bash.exe".
+local TERM_NAME = "fuse-termux"
+config.window_frame = { font = wezterm.font({ family = user.font or "CaskaydiaCove Nerd Font" }) }
+wezterm.on("format-window-title", function() return TERM_NAME end)
+wezterm.on("format-tab-title", function(tab)
+  -- Muestra el nombre + el numero de pestana si hay mas de una.
+  local i = tab.tab_index + 1
+  return string.format("  %s %d  ", TERM_NAME, i)
+end)
+
 -- ============================================================================
 --  PANEL DE CONTROL EN VIVO — cambiar opacidad/blur/tema con el teclado,
 --  sin abrir ningun archivo. Los cambios son de la sesion; para dejarlos

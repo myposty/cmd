@@ -140,6 +140,64 @@ case "$OS" in
 esac
 
 # ============================================================================
+#  3b. Git Bash (Windows): el shell que usa todo el setup. Si falta, se instala.
+# ============================================================================
+GITBASH_EXE="C:/Program Files/Git/bin/bash.exe"
+if [ "$OS" = "windows" ]; then
+  if [ -f "$GITBASH_EXE" ]; then skip "Git Bash"
+  else
+    say "Git Bash no esta. Instalando (lo usa todo el setup)..."
+    scoop install git >/dev/null 2>&1; hash -r 2>/dev/null
+    # scoop instala git en otra ruta; detectamos el bash resultante.
+    for c in "$HOME/scoop/apps/git/current/bin/bash.exe" "C:/Program Files/Git/bin/bash.exe"; do
+      [ -f "$c" ] && { GITBASH_EXE="$c"; break; }
+    done
+    [ -f "$GITBASH_EXE" ] && ok "Git Bash" || err "Git Bash (instala Git para Windows: https://git-scm.com/download/win)"
+  fi
+fi
+
+# ============================================================================
+#  3c. Configurar terminales de editores (PREGUNTA cual). Windows: apunta a
+#      Git Bash + fuente Nerd Font + colores indigo, para que la terminal
+#      integrada se vea igual que WezTerm.
+# ============================================================================
+configure_editor() {  # $1 = nombre, $2 = ruta del settings.json
+  local name=$1 settings=$2
+  [ -d "$(dirname "$settings")" ] || return  # el editor no esta instalado
+  mkdir -p "$(dirname "$settings")"
+  [ -f "$settings" ] || echo '{}' > "$settings"
+  # Backup antes de tocar.
+  cp "$settings" "$settings.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null
+  # Inyecta las claves con node si esta, o con un merge simple via python.
+  if command -v node >/dev/null 2>&1; then
+    node -e '
+      const fs=require("fs"), f=process.argv[1], gb=process.argv[2];
+      let s={}; try{ s=JSON.parse(fs.readFileSync(f,"utf8")||"{}"); }catch(e){}
+      s["terminal.integrated.defaultProfile.windows"]="Git Bash";
+      s["terminal.integrated.profiles.windows"]=Object.assign(s["terminal.integrated.profiles.windows"]||{},{ "Git Bash":{ path: gb } });
+      s["terminal.integrated.fontFamily"]="CaskaydiaCove NF";
+      fs.writeFileSync(f, JSON.stringify(s,null,2));
+    ' "$settings" "$GITBASH_EXE" 2>/dev/null && ok "$name configurado" || err "$name (no pude editar el settings)"
+  else
+    err "$name: necesito node para editar el settings.json de forma segura"
+  fi
+}
+
+if [ "$OS" = "windows" ] && [ -t 0 ]; then
+  echo
+  printf '\033[38;5;104m==>\033[0m Configuro la terminal integrada de tus editores con Git Bash?\n'
+  printf '    [1] VS Code   [2] Cursor   [3] Ambos   [N] ninguno : '
+  read -r ed
+  case "$ed" in
+    1) configure_editor "VS Code" "$APPDATA/Code/User/settings.json" ;;
+    2) configure_editor "Cursor"  "$APPDATA/Cursor/User/settings.json" ;;
+    3) configure_editor "VS Code" "$APPDATA/Code/User/settings.json"
+       configure_editor "Cursor"  "$APPDATA/Cursor/User/settings.json" ;;
+    *) echo "   No toco los editores." ;;
+  esac
+fi
+
+# ============================================================================
 #  4. Desplegar configuraciones (con backup si ya existian y difieren).
 # ============================================================================
 deploy() {  # $1 = archivo en dots, $2 = destino
