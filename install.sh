@@ -53,7 +53,15 @@ say "OS detectado: $OS | gestor: ${PKG:-ninguno} | shell: $SHELL_RC"
 # ============================================================================
 case "$PKG" in
   scoop)
-    have scoop || { say "Instalando scoop..."; powershell.exe -NoProfile -Command "iwr -useb get.scoop.sh | iex" || { err "scoop fallo"; exit 1; }; }
+    if ! have scoop; then
+      say "Instalando scoop..."
+      powershell.exe -NoProfile -Command "iwr -useb get.scoop.sh | iex" || { err "scoop fallo"; exit 1; }
+    fi
+    # CLAVE: scoop recien instalado NO esta en el PATH de ESTA sesion. Sus shims
+    # viven en ~/scoop/shims; los agregamos ya, o todos los `scoop install` fallan.
+    export PATH="$HOME/scoop/shims:$PATH"
+    hash -r 2>/dev/null  # olvida el cache de "comando no encontrado"
+    if ! have scoop; then err "scoop instalado pero no aparece en el PATH; abri una terminal nueva y reintenta"; exit 1; fi
     scoop bucket list 2>/dev/null | grep -q "^extras"     || scoop bucket add extras     >/dev/null 2>&1
     scoop bucket list 2>/dev/null | grep -q "^nerd-fonts" || scoop bucket add nerd-fonts >/dev/null 2>&1 ;;
   brew)
@@ -84,6 +92,7 @@ pkg_install  zoxide   zoxide   zoxide   zoxide      zoxide   zoxide
 pkg_install  eza      eza      eza      eza         eza      eza
 pkg_install  fzf      fzf      fzf      fzf         fzf      fzf       # buscador de cd / Ctrl+F
 pkg_install  fd       fd       fd       fd-find     fd-find  fd        # busqueda rapida de carpetas
+hash -r 2>/dev/null  # refresca para que los shims recien instalados se vean
 
 # WezTerm: en Windows usamos el NIGHTLY (el estable de scoop es viejo y NO tiene
 # el blur Acrylic). En Mac/Linux el paquete normal ya es reciente.
@@ -98,14 +107,15 @@ else
   have wezterm && ok "wezterm" || err "wezterm (ver https://wezterm.org)"
 fi
 
-# oh-my-posh: instalador propio por plataforma.
+# oh-my-posh: en Windows por SCOOP (mismo gestor, PATH ya resuelto). winget es
+# mas fragil y su PATH tampoco se refresca en la sesion.
 if have oh-my-posh; then skip "oh-my-posh"
 else
   say "Instalando oh-my-posh..."
   case "$OS" in
-    windows) winget install JanDeDobbeleer.OhMyPosh -s winget --silent >/dev/null 2>&1 ;;
+    windows) scoop install oh-my-posh >/dev/null 2>&1; hash -r 2>/dev/null ;;
     macos)   brew install jandedobbeleer/oh-my-posh/oh-my-posh >/dev/null 2>&1 ;;
-    linux)   curl -s https://ohmyposh.dev/install.sh | bash -s >/dev/null 2>&1 ;;
+    linux)   curl -s https://ohmyposh.dev/install.sh | bash -s -- -d ~/.local/bin >/dev/null 2>&1; export PATH="$HOME/.local/bin:$PATH" ;;
   esac
   have oh-my-posh && ok "oh-my-posh" || err "oh-my-posh (ver https://ohmyposh.dev)"
 fi
@@ -196,17 +206,30 @@ echo "   WezTerm arranca con el shell nativo, la Nerd Font y el tema indigo."
 echo "   Los caches se regeneraron; no hay que limpiar nada a mano."
 echo
 
-# Preguntar si abrir WezTerm (solo si esta instalado y hay una TTY interactiva).
-if have wezterm && [ -t 0 ]; then
+# Ubica el wezterm-gui: nightly (Windows) o el que este en el PATH.
+_wt_gui=""
+for p in "$HOME/scoop/apps/wezterm-nightly/current/wezterm-gui.exe" \
+         "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe"; do
+  [ -f "$p" ] && { _wt_gui="$p"; break; }
+done
+[ -z "$_wt_gui" ] && command -v wezterm-gui >/dev/null 2>&1 && _wt_gui="wezterm-gui"
+
+if [ "$OS" = "windows" ]; then
+  say "IMPORTANTE en Windows:"
+  echo "   Las herramientas se instalaron via scoop. Si abris PowerShell o CMD y"
+  echo "   'wezterm' no se reconoce, es porque el PATH se refresca en una terminal"
+  echo "   NUEVA. Cerra esta y abri otra, o abri WezTerm directo (abajo)."
+  echo
+fi
+
+# Preguntar si abrir WezTerm (solo si lo encontramos y hay TTY interactiva).
+if [ -n "$_wt_gui" ] && [ -t 0 ]; then
   printf '\033[38;5;104m==>\033[0m Abro WezTerm ahora? [s/N] '
   read -r ans
   case "$ans" in
-    s|S|y|Y)
-      case "$OS" in
-        windows) "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe" start >/dev/null 2>&1 & ;;
-        *)       wezterm start >/dev/null 2>&1 & ;;
-      esac
-      ok "WezTerm lanzado." ;;
-    *) echo "   Cuando quieras: wezterm-gui (Windows) o wezterm (Mac/Linux)." ;;
+    s|S|y|Y) "$_wt_gui" start >/dev/null 2>&1 & ok "WezTerm lanzado." ;;
+    *) echo "   Cuando quieras, abrilo con: $_wt_gui" ;;
   esac
+elif [ -z "$_wt_gui" ]; then
+  err "No encontre wezterm-gui. Instalalo a mano: scoop install wezterm-nightly"
 fi
