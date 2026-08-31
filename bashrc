@@ -155,12 +155,12 @@ help() {
   printf '  %sTip: escribi %shelp%s%s cuando quieras volver a ver esto.%s\n\n' "$D" "$K" "$R" "$D" "$R"
 }
 if [[ $- == *i* ]]; then
-  _C=$'\e[38;5;110m'; _K=$'\e[38;5;180m'; _D=$'\e[38;5;245m'; _R=$'\e[0m'
-  printf '  %sComandos:%s  %scd%s salta  ·  %sz%s salto rapido  ·  %sCtrl+F%s buscar  ·  %sCtrl+R%s historial\n' \
-    "$_C" "$_R" "$_K" "$_R" "$_K" "$_R" "$_K" "$_R" "$_K" "$_R"
-  printf '  %sTemas:%s     %sCtrl+Shift+.%s cambiar  ·  %sCtrl+Shift+P%s menu  ·  %sF11/F12%s opacidad\n' \
-    "$_C" "$_R" "$_K" "$_R" "$_K" "$_R" "$_K" "$_R"
-  printf '  %sEscribi %shelp%s%s para ver todo.%s\n\n' "$_D" "$_K" "$_R" "$_D" "$_R"
+  _k=$'\e[38;5;109m'; _d=$'\e[38;5;242m'; _s=$'\e[38;5;238m'; _r=$'\e[0m'
+  # dos lineas alineadas, tono apagado para que no compita con el prompt.
+  printf '%s  %scd%s %sz%s carpetas%s   %s%sCtrl+F%s buscar%s   %s%sCtrl+R%s historial%s\n' \
+    "$_d" "$_k" "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r"
+  printf '%s  %sCtrl+Shift+.%s tema%s   %s%sF11/F12%s opacidad%s   %s%shelp%s ver todo%s\n\n' \
+    "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r"
 fi
 
 # --- `cd` INTELIGENTE -------------------------------------------------------
