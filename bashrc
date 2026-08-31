@@ -88,6 +88,15 @@ __cmd_update() {
   rm -f ~/.cache/sh-init/omp.sh   # regenera el cache del prompt
   return 0
 }
+# Muestra el changelog de una version (la seccion "## X" de CHANGELOG.md).
+__cmd_changelog() {
+  local repo; repo=$(cat ~/.config/cmd/repo-path 2>/dev/null)
+  local f="$repo/CHANGELOG.md"
+  [ -s "$f" ] || return
+  printf '\e[38;5;140m     Novedades %s:\e[0m\n' "$1"
+  awk -v v="## $1" '$0==v{p=1;next} /^## /{p=0} p' "$f" | sed 's/^/    /'
+  printf '\n'
+}
 if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
   _CMD_VERSION_URL="https://raw.githubusercontent.com/myposty/cmd/main/VERSION"
   _local_ver=$(cat ~/.config/cmd/VERSION 2>/dev/null || echo "0.0.0")
@@ -106,7 +115,9 @@ if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
       *)
         printf '\e[38;5;60m     Actualizando...\e[0m\n'
         if __cmd_update; then
-          printf '\e[38;5;108m     ✓ Actualizado a %s\e[0m\n\n' "$_remote_ver"
+          printf '\e[38;5;108m     ✓ Actualizado a %s\e[0m\n' "$_remote_ver"
+          # Changelog de esta version (solo aca, una vez, tras actualizar).
+          __cmd_changelog "$_remote_ver"
           # Recarga el prompt con el tema elegido, para ver los cambios YA.
           __settheme "$(cat ~/.cache/cmd-theme 2>/dev/null | tr -d ' \r\n\t')"
         else
@@ -120,6 +131,23 @@ if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
       && mv "$_ver_cache.tmp" "$_ver_cache" && touch "$_ver_stamp" ) &
     disown 2>/dev/null
   fi
+fi
+
+# --- HINT al abrir: un tip rotativo de comandos/atajos ----------------------
+if [[ $- == *i* ]]; then
+  _tips=(
+    "Ctrl+Shift+.   cambia el tema en vivo (Ctrl+Shift+, vuelve)"
+    "Ctrl+F         buscador de carpetas: escribi y filtra en vivo"
+    "cd <nombre>    salta a una carpeta sin saber la ruta completa"
+    "z <nombre>     salto rapido a las carpetas que mas usas"
+    "Ctrl+R         busca en todo tu historial de comandos (atuin)"
+    "Ctrl+Shift+H   muestra TODOS los atajos de la terminal"
+    "F11 / F12      mas / menos transparencia de la ventana"
+    "Ctrl+Shift+B   activa o desactiva el blur del fondo"
+    "Ctrl+Shift+P   menu de temas con vista previa de colores"
+    "flecha arriba  autocompleta con el ultimo comando que empezaba igual"
+  )
+  printf '\e[38;5;60m  💡 %s\e[0m\n\n' "${_tips[$RANDOM % ${#_tips[@]}]}"
 fi
 
 # --- `cd` INTELIGENTE -------------------------------------------------------
