@@ -94,11 +94,25 @@ if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
   _ver_cache=~/.cache/cmd-latest-version
   _ver_stamp=~/.cache/cmd-version-checked
   _remote_ver=$(cat "$_ver_cache" 2>/dev/null)
-  # Hay update -> lo APLICA SOLO, en background, y avisa. Reabri para verlo.
-  if [ -n "$_remote_ver" ] && [ "$_remote_ver" != "$_local_ver" ]; then
-    printf '\e[38;5;176m  ✨ Actualizando terminal %s -> %s en segundo plano...\e[0m\n' "$_local_ver" "$_remote_ver"
-    printf '\e[38;5;60m     (reabri la terminal cuando termine para ver los cambios)\e[0m\n\n'
-    ( __cmd_update ) & disown 2>/dev/null
+  # Hay update -> PREGUNTA. Si aceptas, actualiza A LA VISTA y recarga el prompt
+  # al instante (sin reabrir). Respeta tu tema elegido (no toca cmd-theme).
+  if [ -n "$_remote_ver" ] && [ "$_remote_ver" != "$_local_ver" ] && [ -t 0 ]; then
+    printf '\e[38;5;176m  ✨ Hay una version nueva de tu terminal: %s -> %s\e[0m\n' "$_local_ver" "$_remote_ver"
+    printf '\e[38;5;104m  ¿Actualizar ahora? [S/n] \e[0m'
+    read -r _ans
+    case "$_ans" in
+      n|N|no|NO)
+        printf '\e[38;5;60m     ok, mas tarde. (corre __cmd_update cuando quieras)\e[0m\n\n' ;;
+      *)
+        printf '\e[38;5;60m     Actualizando...\e[0m\n'
+        if __cmd_update; then
+          printf '\e[38;5;108m     ✓ Actualizado a %s\e[0m\n\n' "$_remote_ver"
+          # Recarga el prompt con el tema elegido, para ver los cambios YA.
+          __settheme "$(cat ~/.cache/cmd-theme 2>/dev/null | tr -d ' \r\n\t')"
+        else
+          printf '\e[38;5;168m     No se pudo actualizar solo. Proba: cd "%s" \&\& git pull\e[0m\n\n' "$(cat ~/.config/cmd/repo-path 2>/dev/null)"
+        fi ;;
+    esac
   fi
   # Chequea GitHub una vez por dia, en background.
   if [ ! -f "$_ver_stamp" ] || [ "$(find "$_ver_stamp" -mtime +1 2>/dev/null)" ]; then
