@@ -51,10 +51,14 @@ cd() {
   if [ -z "$results" ]; then
     echo "cd: no existe '$target' ni hay carpetas que coincidan"; return 1
   fi
-  # 3) Menu con flechas + Enter (fzf). Una sola coincidencia -> entra directo.
+  # 3) Menu con flechas + Enter (fzf). Query pre-cargada con lo que escribiste,
+  #    asi la lista ya viene filtrada. El header es el helper: dice que hacer.
   local choice
   if command -v fzf >/dev/null 2>&1; then
-    choice=$(printf '%s\n' "$results" | fzf --height=40% --reverse --prompt="cd> " \
+    choice=$(printf '%s\n' "$results" | fzf --height=45% --reverse \
+      --query="$target" \
+      --prompt="cd> " \
+      --header="Escribi para filtrar  ·  Flechas para moverte  ·  Enter entra  ·  ESC cancela" \
       --preview 'eza --icons --color=always {} 2>/dev/null || ls -A {}' --preview-window=right:50%)
   else
     choice=$(printf '%s\n' "$results" | head -1)  # sin fzf, la primera
