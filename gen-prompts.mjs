@@ -40,29 +40,28 @@ function mix(a, b, t) {
 // ANSI base = indices 4..11 (0=black 1=red 2=green 3=yellow 4=blue 5=magenta 6=cyan 7=white)
 function paletteFor(t) {
   const a = t.ansi, bg = t.bg, fg = t.fg;
-  // El COLOR DE MARCA del tema = su cursor (o el azul ansi). Es el acento principal.
-  const brand = t.cursor || a[8] || mix(bg, fg, 0.35);
-  // Colores semanticos, PERO suavizados hacia el fondo para que no chillen.
-  const soft = (c) => mix(c, bg, 0.25);           // acerca el color al fondo (mate)
-  const green  = soft(a[6] || "#7fbf7f");
-  const yellow = soft(a[7] || "#d9b95c");
-  const red    = soft(a[5] || "#c46b6b");
-  // Fondos base: un gris coherente derivado del fondo del tema (mismo para OS/hora).
-  const base   = mix(bg, fg, 0.14);
-  const baseHi = mix(bg, fg, 0.22);
+  // COLORES REALES Y CRUDOS DEL TEMA. Cada segmento = un color ansi PURO del tema.
+  // Nada de mix() ni grises inventados: si es dracula, se ven los colores de dracula.
+  const blue    = a[8]  || fg;   // ansi blue
+  const green   = a[6]  || fg;   // ansi green
+  const yellow  = a[7]  || fg;   // ansi yellow
+  const red      = a[5]  || fg;  // ansi red
+  const magenta = a[9]  || fg;   // ansi magenta
+  const cyan    = a[10] || fg;   // ansi cyan
+  // Texto que se lee sobre cada fondo (claro u oscuro segun el brillo del fondo).
+  const on = (bgHex) => textOnLight(bgHex, fg, bg);
   return {
-    // Todos los fondos "neutros" comparten el mismo tono base -> se ven UNIFORMES.
-    "indigo-darkest": mix(bg, "#000000", 0.15),  // status (fondo oscuro)
-    "indigo-dark":    base,                       // OS
-    "indigo-mid":     baseHi,                     // path (un poco mas claro, jerarquia)
-    "indigo":         base,                       // lenguajes
-    "indigo-light":   soft(brand),                // git limpio -> el color de marca, suavizado
-    "violet-muted":   yellow,                     // git con cambios -> amarillo mate
-    "amber-muted":    base,                       // execution time
-    "danger":         red,                        // error -> rojo mate
-    "text-light":     fg,                         // texto claro sobre fondos oscuros
-    "text-dark":      textOnLight(soft(brand), fg, bg), // texto sobre el fondo de marca
-    "line":           soft(brand),                // las lineas ╰─ / ─╯ en color de marca
+    "indigo-darkest": bg,       // status: el FONDO REAL del tema (se funde con la terminal)
+    "indigo-dark":    blue,     // OS -> azul del tema
+    "indigo-mid":     cyan,     // path -> cyan del tema
+    "indigo":         magenta,  // lenguajes -> magenta
+    "indigo-light":   green,    // git limpio -> verde del tema
+    "violet-muted":   yellow,   // git con cambios -> amarillo del tema
+    "amber-muted":    magenta,  // execution time -> magenta
+    "danger":         red,      // error -> rojo del tema
+    "text-light":     on(blue), // texto sobre los fondos de color
+    "text-dark":      on(green),
+    "line":           blue,     // lineas ╰─ / ─╯ en azul del tema
   };
 }
 // Elige texto claro u oscuro segun el brillo del fondo (para que siempre se lea).
