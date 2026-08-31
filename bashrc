@@ -63,3 +63,25 @@ cd() {
 }
 # Lista el contenido al entrar (eza si esta, si no ls).
 _cd_ls() { eza --icons --group-directories-first -a 2>/dev/null || ls -A --color=auto; }
+
+# --- Ctrl+F: buscador de carpetas EN VIVO -----------------------------------
+# Aprieta Ctrl+F y empeza a escribir: la lista se filtra en TIEMPO REAL con cada
+# tecla. Flechas para moverte, Enter hace cd a la elegida. ESC cancela.
+# Esto es lo que da el "mientras escribo ya me lista" sin apretar Enter dos veces.
+_cd_fzf() {
+  command -v fzf >/dev/null 2>&1 || return
+  local all dir
+  # Junta TODAS las carpetas de tus roots una vez; fzf filtra en vivo sobre eso.
+  if command -v fd >/dev/null 2>&1; then
+    all=$(fd -t d -i -d 5 . "${_cd_roots[@]}" 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build|/\.next|vendor")
+  else
+    all=$(find "${_cd_roots[@]}" -maxdepth 5 -type d 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build")
+  fi
+  dir=$(printf '%s\n' "$all" | fzf --height=45% --reverse --prompt="carpeta> " \
+    --preview 'eza --icons --color=always {} 2>/dev/null || ls -A {}' --preview-window=right:50%)
+  if [ -n "$dir" ]; then
+    builtin cd "$dir" && _cd_ls
+  fi
+}
+# Enlaza Ctrl+F a la funcion, y redibuja el prompt despues.
+bind -x '"\C-f": _cd_fzf' 2>/dev/null
