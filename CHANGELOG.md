@@ -1,3 +1,19 @@
+## 1.5.0
+- El check va VERDE si el comando salio bien, ROJO si fallo (con el codigo de error)
+- La hora y el tiempo de ejecucion tienen colores propios y distintivos
+- Segmentos nuevos en el prompt: RAM y CPU (snapshot por comando)
+- Medidor EN VIVO de RAM/CPU/reloj en la barra de WezTerm (refresca solo cada
+  ~3s desde WezTerm, no frena el Enter ni toca lo que estas tecleando)
+- La bateria cambia de color segun la carga: verde (lleno), amarillo, rojo (bajo)
+- Iconos arreglados: RAM, CPU, bateria y carpeta ahora usan glyphs validos de la
+  Nerd Font (el de RAM era un tofu)
+- Si la ruta es muy larga se acorta con `...` (agnoster_short)
+- Los comandos internos (__settheme al cambiar tema, etc.) ya no ensucian el
+  historial (filtro en atuin)
+- Instalacion en Windows: ahora usa winget (nativo, firmado, sin tocar execution
+  policy) y funciona en equipos corporativos bloqueados donde scoop no arranca;
+  scoop queda de respaldo si winget no esta
+
 ## 1.4.0
 - Separadores en triangulo (powerline clasico), puntas redondas en extremos
 - Fix: el prompt se ve bien desde el primer arranque en un equipo nuevo

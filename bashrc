@@ -53,8 +53,49 @@ else
 fi
 _step "prompt"
 
+# --- Medidor de sistema (RAM/CPU) para el prompt Y la barra de WezTerm -------
+# Un daemon LIVIANO mide RAM/CPU cada ~2s y las deja en un archivo ("RAM CPU").
+# Con /proc (MSYS lo emula en Windows; nativo en Linux) medir es casi gratis.
+# El prompt y WezTerm SOLO LEEN ese archivo -> se actualiza EN VIVO aunque estes
+# quieto, sin frenar el Enter y sin que WezTerm tenga que correr un script.
+# Singleton: un solo daemon por maquina (pidfile + kill -0).
+_posh_sys_file="$HOME/.cache/posh-sys"
+_posh_sys_pid="$HOME/.cache/posh-sys.pid"
+_posh_sys_probe() {
+  # wmic ya NO existe en Win11 reciente; /proc SI. CPU = delta de /proc/stat.
+  if [ -r /proc/stat ] && [ -r /proc/meminfo ]; then
+    local _ r1 r2 i1 i2 T1 T2 x dt di ram cpu
+    ram=$(awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} /^MemFree:/{f=$2} END{if(a=="")a=f; if(t>0)printf "%d",(t-a)*100/t}' /proc/meminfo)
+    read -r _ r1 < /proc/stat; set -- $r1; i1=$4; T1=0; for x in "$@"; do T1=$((T1+x)); done
+    sleep 0.2
+    read -r _ r2 < /proc/stat; set -- $r2; i2=$4; T2=0; for x in "$@"; do T2=$((T2+x)); done
+    dt=$((T2-T1)); di=$((i2-i1)); cpu=0; [ "$dt" -gt 0 ] && cpu=$(( (100*(dt-di))/dt ))
+    printf '%s %s' "$ram" "$cpu"
+  elif command -v top >/dev/null 2>&1; then                   # Mac
+    printf ' %s' "$(top -l1 2>/dev/null | awk -F'[ %]+' '/CPU usage/{print int($3+$5); exit}')"
+  fi
+}
+# arranca el daemon si no hay uno vivo ya
+if ! { [ -f "$_posh_sys_pid" ] && kill -0 "$(cat "$_posh_sys_pid" 2>/dev/null)" 2>/dev/null; }; then
+  ( echo "$BASHPID" > "$_posh_sys_pid"
+    while :; do
+      _posh_sys_probe > "$_posh_sys_file.tmp" 2>/dev/null && mv "$_posh_sys_file.tmp" "$_posh_sys_file" 2>/dev/null
+      sleep 2
+    done
+  ) >/dev/null 2>&1 & disown 2>/dev/null
+fi
+# icono de CPU segun arquitectura: estatico, se detecta UNA vez (costo cero luego)
+case "$(uname -m 2>/dev/null)" in
+  x86_64|amd64|aarch64|arm64) export POSH_CPU_ICON=$'\U000F0EE0' ;;  # 64-bit (md-cpu_64_bit)
+  *)                          export POSH_CPU_ICON=$'\U000F0EDF' ;;  # 32-bit (md-cpu_32_bit)
+esac
+# el prompt lee el CPU (2do campo) de ese archivo -> POSH_CPU
+_posh_cpu() { export POSH_CPU="$(awk '{print $2}' "$_posh_sys_file" 2>/dev/null)"; }
+case ":$PROMPT_COMMAND:" in *:_posh_cpu:*) ;; *) PROMPT_COMMAND="_posh_cpu${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;; esac
+
 # --- Historial grande, sin duplicados. --------------------------------------
 export HISTSIZE=50000 HISTFILESIZE=50000 HISTCONTROL=ignoreboth:erasedups
+export HISTIGNORE="__settheme*:__cmd_update*:__cmd_changelog*"   # comandos internos: NO ensucian el historial
 shopt -s histappend
 _step "historial"
 

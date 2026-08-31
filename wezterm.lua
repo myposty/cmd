@@ -52,6 +52,7 @@ user.font_ligatures = default(user.font_ligatures, false)
 user.window_buttons        = default(user.window_buttons, true)
 user.tabs_at_bottom        = default(user.tabs_at_bottom, true)
 user.hide_tabs_when_single = default(user.hide_tabs_when_single, true)
+user.sys_meter        = default(user.sys_meter, true)   -- RAM/CPU/reloj en vivo en la barra
 user.padding          = default(user.padding, 10)
 user.confirm_close    = default(user.confirm_close, true)
 user.scrollback_lines = default(user.scrollback_lines, 10000)
@@ -113,7 +114,11 @@ config.macos_window_background_blur = user.mac_blur
 config.window_decorations = user.window_buttons and "TITLE | RESIZE" or "RESIZE"
 config.window_padding = { left = user.padding, right = user.padding, top = user.padding, bottom = user.padding }
 config.use_fancy_tab_bar = false
-config.hide_tab_bar_if_only_one_tab = user.hide_tabs_when_single
+-- El medidor en vivo (RAM/CPU/reloj) vive en la barra; si esta encendido, la
+-- barra debe quedar SIEMPRE visible (si no, con una sola pestana se esconde).
+config.hide_tab_bar_if_only_one_tab = (not user.sys_meter) and user.hide_tabs_when_single
+-- El reloj de la barra late cada segundo; RAM/CPU se releen cada 2s (throttle interno).
+config.status_update_interval = 1000
 config.tab_bar_at_bottom = user.tabs_at_bottom
 
 -- --- Confirmacion al cerrar (en el IDIOMA del sistema) ----------------------
@@ -158,6 +163,43 @@ wezterm.on("format-tab-title", function(tab)
   local i = tab.tab_index + 1
   return string.format("  %s %d  ", TERM_NAME, i)
 end)
+
+-- ============================================================================
+--  MEDIDOR EN VIVO — RAM / CPU / reloj en la barra (arriba a la derecha).
+--  Se refresca SOLO cada ~3s desde el loop de WezTerm: no toca el shell ni tu
+--  linea de input, y el sondeo corre FUERA del camino critico (por eso no
+--  frena el Enter). Realtime a costo cero no existe: esto muestrea barato y
+--  fuera del prompt. Se apaga con sys_meter=false en config.lua.
+-- ============================================================================
+-- Guard: WezTerm ACUMULA los callbacks de wezterm.on en cada recarga de config
+-- (no los limpia). Sin esto, tras varios reloads corren N handlers viejos y uno
+-- roto puede ganar -> el medidor "se queda" estatico. wezterm.GLOBAL persiste
+-- entre reloads: registramos el handler UNA sola vez por sesion.
+if user.sys_meter and not wezterm.GLOBAL.sys_meter_on then
+  wezterm.GLOBAL.sys_meter_on = true
+  -- El daemon del shell (ver bashrc) mide RAM/CPU con /proc y las deja en
+  -- ~/.cache/posh-sys ("RAM CPU") cada ~2s. WezTerm LEE ese archivo con io.open
+  -- (verificado que funciona en Windows para lectura) en CADA tick de 1s: sin
+  -- spawnear procesos, sin bloquear, y RE-leyendo siempre -> nunca queda estatico.
+  local sys_file = wezterm.home_dir .. "/.cache/posh-sys"
+
+  wezterm.on("update-status", function(window, _)
+    local ram, cpu
+    local f = io.open(sys_file, "r")
+    if f then
+      local c = f:read("*a"); f:close()
+      if c then ram, cpu = c:match("(%d+)%s+(%d+)") end
+    end
+    local parts = {}
+    if ram and ram ~= "" then table.insert(parts, "RAM " .. ram .. "%") end
+    if cpu and cpu ~= "" then table.insert(parts, "CPU " .. cpu .. "%") end
+    table.insert(parts, os.date("%H:%M:%S"))
+    window:set_right_status(wezterm.format({
+      { Foreground = { Color = t.foreground } },
+      { Text = "  " .. table.concat(parts, "   ") .. "  " },
+    }))
+  end)
+end
 
 -- ============================================================================
 --  PANEL DE CONTROL EN VIVO — cambiar opacidad/blur/tema con el teclado,

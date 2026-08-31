@@ -88,6 +88,7 @@ function paletteFor(t) {
     "indigo":         a5,   // lenguajes / git ahead+behind -> magenta
     "amber-muted":    a3,   // tiempo      -> amarillo (distinto de magenta)
     "danger":         a1,   // errores     -> rojo
+    "ok":             b2,   // check exito -> verde
     "indigo-darkest": bg,   // status / fondo del terminal
     "line":           line, // lineas ╰─ / ─╯
   };
@@ -101,11 +102,13 @@ const SEG = {
   node:          { bg: "indigo" },
   go:            { bg: "indigo" },
   python:        { bg: "indigo" },
-  executiontime: { bg: "amber-muted" },
-  battery:       { bg: "indigo" },      // bateria
-  time:          { bg: "indigo-light" },
+  sysinfo:       { bg: "indigo" },      // RAM -> magenta
+  session:       { bg: "indigo-mid" },  // CPU (via $POSH_CPU) -> cyan (distinto del tiempo)
+  executiontime: { bg: "indigo-light" }, // tiempo -> verde brillante (distintivo)
+  battery:       { bg: "ok", variants: { "amber-muted": "mid", danger: "low" } }, // verde=lleno, amarillo=medio, rojo=bajo
+  time:          { bg: "indigo-dark" }, // hora -> azul (distinto del check verde)
   git:           { bg: "indigo-light", variants: { "violet-muted": "dirty", danger: "danger", indigo: "ahead" } },
-  status:        { bg: "indigo-darkest", variants: { danger: "error" } },
+  status:        { bg: "ok", variants: { danger: "error" } },
 };
 
 function buildPrompt(t) {

@@ -35,7 +35,12 @@ case "$(uname -s)" in
 esac
 
 # Gestor de paquetes segun OS.
-if   [ "$OS" = "windows" ]; then PKG="scoop"
+if   [ "$OS" = "windows" ]; then
+  # winget viene nativo en Win11, es firmado por Microsoft y NO toca la execution
+  # policy de PowerShell -> funciona en equipos corporativos con lockdown, donde el
+  # bootstrap de scoop (iwr|iex) muere al no poder cargar Microsoft.PowerShell.Security.
+  # Preferimos winget; scoop queda de respaldo si winget no esta.
+  if have winget; then PKG="winget"; else PKG="scoop"; fi
 elif [ "$OS" = "macos" ];   then PKG="brew"
 elif [ "$OS" = "linux" ];   then
   if   have apt;    then PKG="apt"
@@ -52,6 +57,13 @@ say "OS detectado: $OS | gestor: ${PKG:-ninguno} | shell: $SHELL_RC"
 #  2. Asegurar el gestor de paquetes.
 # ============================================================================
 case "$PKG" in
+  winget)
+    # winget ya viene con el sistema; nada que instalar. Solo aseguramos que su
+    # carpeta de shims (Links) este en el PATH de ESTA sesion, o las tools recien
+    # instaladas no se ven hasta reabrir la terminal.
+    export PATH="$HOME/AppData/Local/Microsoft/WinGet/Links:$PATH"
+    hash -r 2>/dev/null
+    if ! have winget; then err "winget no responde; abri una terminal nueva y reintenta"; exit 1; fi ;;
   scoop)
     # Chequeamos la CARPETA, no solo el comando: scoop puede estar instalado en
     # disco pero fuera del PATH de esta sesion. Reinstalarlo falla ("~/scoop
@@ -77,12 +89,13 @@ esac
 # ============================================================================
 #  3. Instalar herramientas. Cada gestor con su nombre de paquete.
 # ============================================================================
-# pkg_install <comando> <nombre-en-cada-gestor...>  (scoop|brew|apt|dnf|pacman)
+# pkg_install <comando> <nombre-en-cada-gestor...>  (scoop|winget|brew|apt|dnf|pacman)
 pkg_install() {
-  local cmd=$1 sc=$2 br=$3 ap=$4 dn=$5 pa=$6 name
+  local cmd=$1 sc=$2 wg=$3 br=$4 ap=$5 dn=$6 pa=$7 name
   if have "$cmd"; then skip "$cmd"; return; fi
   case "$PKG" in
     scoop)  name=$sc; scoop install "$name" >/dev/null 2>&1 ;;
+    winget) name=$wg; winget install --id "$name" -e --source winget --silent --accept-package-agreements --accept-source-agreements >/dev/null 2>&1; hash -r 2>/dev/null ;;
     brew)   name=$br; brew install "$name"  >/dev/null 2>&1 ;;
     apt)    name=$ap; sudo apt-get install -y "$name" >/dev/null 2>&1 ;;
     dnf)    name=$dn; sudo dnf install -y "$name"     >/dev/null 2>&1 ;;
@@ -91,12 +104,12 @@ pkg_install() {
   have "$cmd" && ok "$cmd" || err "$cmd (instalar a mano: paquete '$name')"
 }
 say "Instalando herramientas..."
-#            cmd      scoop    brew     apt         dnf      pacman
-pkg_install  atuin    atuin    atuin    atuin       atuin    atuin
-pkg_install  zoxide   zoxide   zoxide   zoxide      zoxide   zoxide
-pkg_install  eza      eza      eza      eza         eza      eza
-pkg_install  fzf      fzf      fzf      fzf         fzf      fzf       # buscador de cd / Ctrl+F
-pkg_install  fd       fd       fd       fd-find     fd-find  fd        # busqueda rapida de carpetas
+#            cmd      scoop    winget                brew     apt         dnf      pacman
+pkg_install  atuin    atuin    Atuinsh.Atuin         atuin    atuin       atuin    atuin
+pkg_install  zoxide   zoxide   ajeetdsouza.zoxide    zoxide   zoxide      zoxide   zoxide
+pkg_install  eza      eza      eza-community.eza     eza      eza         eza      eza
+pkg_install  fzf      fzf      junegunn.fzf          fzf      fzf         fzf      fzf   # buscador de cd / Ctrl+F
+pkg_install  fd       fd       sharkdp.fd            fd       fd-find     fd-find  fd    # busqueda rapida de carpetas
 hash -r 2>/dev/null  # refresca para que los shims recien instalados se vean
 
 # WezTerm: en Windows usamos el NIGHTLY (el estable de scoop es viejo y NO tiene
@@ -105,9 +118,14 @@ if have wezterm; then skip "wezterm"
 else
   say "Instalando wezterm..."
   case "$OS" in
-    windows) scoop bucket add versions >/dev/null 2>&1; scoop install wezterm-nightly >/dev/null 2>&1 ;;
+    windows)
+      if [ "$PKG" = winget ]; then
+        winget install --id wez.wezterm -e --source winget --silent --accept-package-agreements --accept-source-agreements >/dev/null 2>&1; hash -r 2>/dev/null
+      else
+        scoop bucket add versions >/dev/null 2>&1; scoop install wezterm-nightly >/dev/null 2>&1
+      fi ;;
     macos)   brew install --cask wezterm >/dev/null 2>&1 ;;
-    linux)   pkg_install wezterm wezterm wezterm wezterm wezterm wezterm ;;
+    linux)   pkg_install wezterm wezterm wez.wezterm wezterm wezterm wezterm wezterm ;;
   esac
   have wezterm && ok "wezterm" || err "wezterm (ver https://wezterm.org)"
 fi
@@ -118,7 +136,13 @@ if have oh-my-posh; then skip "oh-my-posh"
 else
   say "Instalando oh-my-posh..."
   case "$OS" in
-    windows) scoop install oh-my-posh >/dev/null 2>&1; hash -r 2>/dev/null ;;
+    windows)
+      if [ "$PKG" = winget ]; then
+        winget install --id JanDeDobbeleer.OhMyPosh -e --source winget --silent --accept-package-agreements --accept-source-agreements >/dev/null 2>&1
+      else
+        scoop install oh-my-posh >/dev/null 2>&1
+      fi
+      hash -r 2>/dev/null ;;
     macos)   brew install jandedobbeleer/oh-my-posh/oh-my-posh >/dev/null 2>&1 ;;
     linux)   curl -s https://ohmyposh.dev/install.sh | bash -s -- -d ~/.local/bin >/dev/null 2>&1; export PATH="$HOME/.local/bin:$PATH" ;;
   esac
@@ -128,7 +152,16 @@ fi
 # Nerd Font.
 say "Nerd Font (CaskaydiaCove)..."
 case "$OS" in
-  windows) [ -d ~/scoop/apps/CascadiaCode-NF ] && skip "Nerd Font" || scoop install CascadiaCode-NF >/dev/null 2>&1 && ok "Nerd Font" ;;
+  windows)
+    if [ "$PKG" = winget ]; then
+      # sin scoop no hay bucket nerd-fonts; oh-my-posh instala la fuente POR USUARIO
+      # (sin admin), que es justo lo que necesita un equipo corporativo bloqueado.
+      if fc-list 2>/dev/null | grep -qi CaskaydiaCove; then skip "Nerd Font"
+      elif command -v oh-my-posh >/dev/null 2>&1; then oh-my-posh font install CascadiaCode >/dev/null 2>&1 && ok "Nerd Font" || err "Nerd Font (corre: oh-my-posh font install CascadiaCode)"
+      else err "Nerd Font (abri una terminal nueva y corre: oh-my-posh font install CascadiaCode)"; fi
+    else
+      [ -d ~/scoop/apps/CascadiaCode-NF ] && skip "Nerd Font" || scoop install CascadiaCode-NF >/dev/null 2>&1 && ok "Nerd Font"
+    fi ;;
   macos)   brew list --cask font-caskaydia-cove-nerd-font >/dev/null 2>&1 && skip "Nerd Font" || { brew tap homebrew/cask-fonts >/dev/null 2>&1; brew install --cask font-caskaydia-cove-nerd-font >/dev/null 2>&1 && ok "Nerd Font"; } ;;
   linux)
     if fc-list 2>/dev/null | grep -qi "CaskaydiaCove"; then skip "Nerd Font"
@@ -147,7 +180,9 @@ if [ "$OS" = "windows" ]; then
   if [ -f "$GITBASH_EXE" ]; then skip "Git Bash"
   else
     say "Git Bash no esta. Instalando (lo usa todo el setup)..."
-    scoop install git >/dev/null 2>&1; hash -r 2>/dev/null
+    if [ "$PKG" = winget ]; then winget install --id Git.Git -e --source winget --silent --accept-package-agreements --accept-source-agreements >/dev/null 2>&1
+    else scoop install git >/dev/null 2>&1; fi
+    hash -r 2>/dev/null
     # scoop instala git en otra ruta; detectamos el bash resultante.
     for c in "$HOME/scoop/apps/git/current/bin/bash.exe" "C:/Program Files/Git/bin/bash.exe"; do
       [ -f "$c" ] && { GITBASH_EXE="$c"; break; }
@@ -212,7 +247,9 @@ if [ "$OS" = "windows" ] && [ -t 0 ]; then
     s|S|y|Y)
       wt=""
       for p in "$HOME/scoop/apps/wezterm-nightly/current/wezterm-gui.exe" \
-               "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe"; do
+               "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe" \
+               "/c/Program Files/WezTerm/wezterm-gui.exe" \
+               "$HOME/AppData/Local/Programs/WezTerm/wezterm-gui.exe"; do
         [ -f "$p" ] && { wt="$p"; break; }
       done
       if [ -n "$wt" ]; then
@@ -292,6 +329,18 @@ if [ "$OS" = "windows" ] && ! grep -q 'export USER=' ~/.bash_profile 2>/dev/null
   ok "~/.bash_profile (USER/LANG)"
 fi
 
+# CRUCIAL: WezTerm lanza bash como LOGIN shell (-l), y un login shell lee
+# ~/.bash_profile, NO ~/.bashrc. Sin este puente el prompt queda en el MINGW64 por
+# defecto y __settheme/oh-my-posh nunca cargan (justo lo que le paso a un socio).
+# Idempotente. En Windows va a .bash_profile; en Linux a .profile (login shell).
+if [ "$OS" != "macos" ]; then
+  _bp=~/.bash_profile; [ "$OS" = "linux" ] && _bp=~/.profile
+  if ! grep -q 'bashrc' "$_bp" 2>/dev/null; then
+    printf '\n# cargar la config interactiva tambien en login shell\n[ -f ~/.bashrc ] && . ~/.bashrc\n' >> "$_bp"
+    ok "puente login -> .bashrc ($_bp)"
+  fi
+fi
+
 # ============================================================================
 #  5. Pre-generar caches de init (arranque rapido en la 1ra terminal).
 # ============================================================================
@@ -306,6 +355,18 @@ _omp_cfg=~/.config/oh-my-posh/indigo-mate.omp.json
 have oh-my-posh && oh-my-posh init "$OMP_SHELL" $([ "$OMP_SHELL" = bash ] && echo --print) --config "$_omp_cfg" > ~/.cache/sh-init/omp.$ext    2>/dev/null && ok "cache omp"
 have atuin      && atuin init  "$OMP_SHELL" > ~/.cache/sh-init/atuin.$ext  2>/dev/null && ok "cache atuin"
 have zoxide     && zoxide init "$OMP_SHELL" > ~/.cache/sh-init/zoxide.$ext 2>/dev/null && ok "cache zoxide"
+
+# atuin tiene su propia base de historial y NO respeta HISTIGNORE de bash. Para que
+# los comandos internos (__settheme del cambio de tema, etc.) no ensucien el
+# historial, agregamos su history_filter si aun no esta. Idempotente.
+if have atuin; then
+  _atc=~/.config/atuin/config.toml
+  mkdir -p ~/.config/atuin
+  if ! grep -q '"\^__settheme"' "$_atc" 2>/dev/null; then
+    printf '\nhistory_filter = [\n  "^__settheme",\n  "^__cmd_update",\n  "^__cmd_changelog",\n]\n' >> "$_atc"
+    ok "atuin: comandos internos fuera del historial"
+  fi
+fi
 
 # ============================================================================
 #  5b. Sembrar zoxide con las carpetas de proyecto (para que `z` y el cd/Ctrl+F
@@ -364,5 +425,5 @@ if [ -n "$_wt_gui" ] && [ -t 0 ]; then
     *) echo "   Cuando quieras, abrilo con: $_wt_gui" ;;
   esac
 elif [ -z "$_wt_gui" ]; then
-  err "No encontre wezterm-gui. Instalalo a mano: scoop install wezterm-nightly"
+  err "No encontre wezterm-gui. Instalalo a mano: winget install wez.wezterm (o scoop install wezterm-nightly)"
 fi
