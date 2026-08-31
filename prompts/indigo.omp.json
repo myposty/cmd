@@ -22,11 +22,10 @@
         {
           "background": "p:indigo-dark",
           "foreground": "#E4E4EF",
-          "leading_diamond": "",
+          "leading_diamond": "╭─",
           "style": "diamond",
           "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
-          "type": "os",
-          "trailing_diamond": ""
+          "type": "os"
         },
         {
           "background": "p:danger",
