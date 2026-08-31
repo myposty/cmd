@@ -22,10 +22,11 @@
         {
           "background": "p:indigo-dark",
           "foreground": "#282A36",
-          "leading_diamond": "╭─",
+          "leading_diamond": "",
           "style": "diamond",
           "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
-          "type": "os"
+          "type": "os",
+          "trailing_diamond": ""
         },
         {
           "background": "p:danger",
@@ -34,18 +35,6 @@
           "style": "powerline",
           "template": "  ",
           "type": "root"
-        },
-        {
-          "background": "p:indigo-mid",
-          "foreground": "#282A36",
-          "powerline_symbol": "",
-          "options": {
-            "home_icon": "~",
-            "style": "full"
-          },
-          "style": "powerline",
-          "template": "  {{ .Path }} ",
-          "type": "path"
         },
         {
           "background": "p:indigo-light",
@@ -65,6 +54,18 @@
           "style": "powerline",
           "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} ",
           "type": "git"
+        },
+        {
+          "background": "p:indigo-mid",
+          "foreground": "#282A36",
+          "powerline_symbol": "",
+          "options": {
+            "home_icon": "~",
+            "style": "full"
+          },
+          "style": "powerline",
+          "template": "  {{ .Path }} ",
+          "type": "path"
         }
       ],
       "type": "prompt"
@@ -72,6 +73,21 @@
     {
       "alignment": "right",
       "segments": [
+        {
+          "background": "p:indigo-darkest",
+          "background_templates": [
+            "{{ if gt .Code 0 }}p:seg-status-error{{ end }}"
+          ],
+          "foreground": "#F8F8F2",
+          "invert_powerline": true,
+          "powerline_symbol": "",
+          "options": {
+            "always_enabled": true
+          },
+          "style": "powerline",
+          "template": " {{ if gt .Code 0 }}{{ reason .Code }}{{ else }}{{ end }} ",
+          "type": "status"
+        },
         {
           "background": "p:indigo",
           "foreground": "#282A36",
@@ -135,21 +151,6 @@
           "powerline_symbol": "",
           "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}%{{ end }} ",
           "type": "battery"
-        },
-        {
-          "background": "p:indigo-darkest",
-          "background_templates": [
-            "{{ if gt .Code 0 }}p:seg-status-error{{ end }}"
-          ],
-          "foreground": "#F8F8F2",
-          "invert_powerline": true,
-          "powerline_symbol": "",
-          "options": {
-            "always_enabled": true
-          },
-          "style": "powerline",
-          "template": " {{ if gt .Code 0 }}{{ reason .Code }}{{ else }}{{ end }} ",
-          "type": "status"
         },
         {
           "background": "p:indigo-light",
