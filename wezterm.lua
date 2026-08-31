@@ -5,11 +5,18 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
--- --- Cargar settings del usuario y temas (con fallback si faltan) -----------
-local ok_cfg, user = pcall(require, "config")
-if not ok_cfg then user = {} end
-local ok_thm, themes = pcall(require, "themes")
-if not ok_thm then themes = {} end
+-- config.lua y themes.lua viven en el HOME. Los cargamos con dofile por RUTA
+-- ABSOLUTA (no require), porque require depende de package.path y ese difiere
+-- segun desde donde se abra WezTerm (Git Bash tiene $HOME, cmd/PowerShell no).
+-- dofile con ruta absoluta es determinista en los tres. Si falla, se usa fallback.
+local home = (os.getenv("HOME") or os.getenv("USERPROFILE") or "C:\\Users\\Public"):gsub("\\", "/")
+local function load_lua(name)
+  local ok, result = pcall(dofile, home .. "/" .. name .. ".lua")
+  if ok and type(result) == "table" then return result end
+  return nil
+end
+local user = load_lua("config") or {}
+local themes = load_lua("themes")  -- nil si no se pudo cargar
 
 -- Valores por defecto: si config.lua no define algo, se usa esto.
 local function default(v, d) if v == nil then return d else return v end end
@@ -35,18 +42,25 @@ if wezterm.target_triple:find("windows") and user.windows_shell then
 end
 
 -- --- Fuente -----------------------------------------------------------------
--- Ligaduras: si font_ligatures=false, se desactivan con harfbuzz features.
-local harfbuzz = user.font_ligatures and {} or { "calt=0", "clig=0", "liga=0" }
-config.font = wezterm.font_with_fallback({ user.font, "Cascadia Mono" }, { harfbuzz_features = harfbuzz })
+config.font = wezterm.font_with_fallback({ user.font, "Cascadia Mono" })
 config.font_size = user.font_size
 config.line_height = user.line_height
 config.scrollback_lines = user.scrollback_lines
+-- Ligaduras: harfbuzz_features va a nivel config (global), NO dentro de la fuente.
+-- Si font_ligatures=false, se apagan con calt/clig/liga = 0.
+if not user.font_ligatures then
+  config.harfbuzz_features = { "calt=0", "clig=0", "liga=0" }
+end
 
--- --- Tema (resuelto desde themes.lua; si el nombre no existe, cae a indigo) --
-local t = themes[user.theme] or themes["indigo"] or {
-  foreground = "#E4E4EF", background = "#1A1A2A", cursor = "#6C6C9E",
-  selection = "#3B3B5C", ansi = {}, brights = {}, tab_active = "#4B4B7A", tab_inactive = "#2E2E4A",
+-- --- Tema (resuelto desde themes.lua; si falta todo, cae a un indigo COMPLETO) --
+-- Fallback con arrays LLENOS (nunca {}), o WezTerm rompe con "Object to array".
+local fallback = {
+  foreground = "#E4E4EF", background = "#1A1A2A", cursor = "#6C6C9E", selection = "#3B3B5C",
+  ansi    = { "#2E2E4A", "#9E5C6C", "#6C6C9E", "#8A7A5C", "#4B4B7A", "#7A6C9E", "#565676", "#E4E4EF" },
+  brights = { "#3B3B5C", "#b57a8a", "#8a8aba", "#a89a72", "#6c6c9e", "#9a8aba", "#7a7a9a", "#ffffff" },
+  tab_active = "#4B4B7A", tab_inactive = "#2E2E4A",
 }
+local t = (themes and (themes[user.theme] or themes["indigo"])) or fallback
 config.colors = {
   foreground = t.foreground,
   background = t.background,
@@ -134,6 +148,7 @@ end
 -- Menu para elegir tema en vivo (Ctrl+Shift+P).
 local function theme_picker()
   return wezterm.action_callback(function(window, pane)
+    if not themes then return end  -- sin themes.lua no hay menu
     local choices = {}
     for name, _ in pairs(themes) do table.insert(choices, { label = name }) end
     table.sort(choices, function(a, b) return a.label < b.label end)
@@ -157,7 +172,46 @@ local function theme_picker()
   end)
 end
 
+-- HELPER VISIBLE: un cheatsheet en pantalla con TODOS los atajos.
+-- Se abre con Ctrl+Shift+Space. Apretas la tecla que muestra y ejecuta la accion;
+-- ESC para salir sin hacer nada. No hay que memorizar nada.
+local function help_menu()
+  return wezterm.action_callback(function(window, pane)
+    window:perform_action(act.InputSelector({
+      title = "  Atajos de WezTerm  (ESC para cerrar)",
+      choices = {
+        { id = "split-h", label = "  Dividir panel  ->  horizontal        (Ctrl+Shift+D)" },
+        { id = "split-v", label = "  Dividir panel  ->  vertical          (Ctrl+Shift+E)" },
+        { id = "close",   label = "  Cerrar panel actual                  (Ctrl+Shift+W)" },
+        { id = "tab",     label = "  Nueva pestana                        (Ctrl+Shift+T)" },
+        { id = "op-up",   label = "  Opacidad +  (mas solido)             (F12)" },
+        { id = "op-down", label = "  Opacidad -  (mas transparente)       (F11)" },
+        { id = "blur",    label = "  Blur ON / OFF                        (Ctrl+Shift+B)" },
+        { id = "theme",   label = "  Elegir tema                          (Ctrl+Shift+P)" },
+        { id = "zoom0",   label = "  Resetear zoom de fuente              (Ctrl+Shift+0)" },
+        { id = "reload",  label = "  Recargar config.lua                  (Ctrl+Shift+R)" },
+      },
+      action = wezterm.action_callback(function(win, p, id, _)
+        if id == "split-h" then win:perform_action(act.SplitHorizontal({ domain = "CurrentPaneDomain" }), p)
+        elseif id == "split-v" then win:perform_action(act.SplitVertical({ domain = "CurrentPaneDomain" }), p)
+        elseif id == "close" then win:perform_action(act.CloseCurrentPane({ confirm = true }), p)
+        elseif id == "tab" then win:perform_action(act.SpawnTab("CurrentPaneDomain"), p)
+        elseif id == "op-up" then win:perform_action(adjust_opacity(0.05), p)
+        elseif id == "op-down" then win:perform_action(adjust_opacity(-0.05), p)
+        elseif id == "blur" then win:perform_action(toggle_blur(), p)
+        elseif id == "theme" then win:perform_action(theme_picker(), p)
+        elseif id == "zoom0" then win:perform_action(act.ResetFontSize, p)
+        elseif id == "reload" then win:perform_action(act.ReloadConfiguration, p)
+        end
+      end),
+    }), pane)
+  end)
+end
+
 config.keys = {
+  -- HELPER: menu con todos los atajos (para no memorizar nada). H = help.
+  { key = "h", mods = "CTRL|SHIFT", action = help_menu() },
+
   -- Paneles (tmux-lite)
   { key = "d", mods = "CTRL|SHIFT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
   { key = "e", mods = "CTRL|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
@@ -169,13 +223,12 @@ config.keys = {
   { key = "t", mods = "CTRL|SHIFT", action = act.SpawnTab("CurrentPaneDomain") },
   { key = "r", mods = "CTRL|SHIFT", action = act.ReloadConfiguration },
 
-  -- PANEL DE CONTROL EN VIVO (Alt+Shift no choca con el zoom de fuente):
-  { key = "UpArrow",   mods = "ALT|SHIFT", action = adjust_opacity(0.05) },   -- mas opaco
-  { key = "DownArrow", mods = "ALT|SHIFT", action = adjust_opacity(-0.05) },  -- mas transparente
-  { key = "b", mods = "CTRL|SHIFT", action = toggle_blur() },                 -- blur on/off
-  { key = "p", mods = "CTRL|SHIFT", action = theme_picker() },                -- menu de temas
-  -- Resetear el zoom de fuente a lo que dice config.lua (por si se agrando).
-  { key = "0", mods = "CTRL|SHIFT", action = act.ResetFontSize },
+  -- PANEL DE CONTROL EN VIVO (teclas simples, sin combinaciones raras):
+  { key = "F12", action = adjust_opacity(0.05) },   -- mas opaco
+  { key = "F11", action = adjust_opacity(-0.05) },  -- mas transparente
+  { key = "b", mods = "CTRL|SHIFT", action = toggle_blur() },      -- blur on/off
+  { key = "p", mods = "CTRL|SHIFT", action = theme_picker() },     -- menu de temas
+  { key = "0", mods = "CTRL|SHIFT", action = act.ResetFontSize },  -- resetear zoom
 }
 
 return config
