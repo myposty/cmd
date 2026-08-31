@@ -57,6 +57,27 @@ looks the same there too.
 - `zi <name>` — interactive picker among matches
 - Up arrow / `Ctrl+R` — search command history (atuin)
 
+## Configuration
+
+Edit **`~/config.lua`** — the only file you need to touch. Save it and press
+`Ctrl+Shift+R` in WezTerm to reload (no restart needed).
+
+| Option | Values | What it does |
+|---|---|---|
+| `theme` | `indigo`, `catppuccin`, `dracula`, `tokyo-night`, `gruvbox` | Color scheme |
+| `opacity` | `0.7`–`1.0` | Window transparency (lower = more glass) |
+| `win_backdrop` | `Acrylic`, `Mica`, `Disable` | Windows 11 blur effect |
+| `mac_blur` | `0`–`30` | macOS background blur |
+| `font`, `font_size`, `line_height` | — | Typography |
+| `window_buttons` | `true`/`false` | Titlebar min/max/close buttons |
+| `confirm_close` | `true`/`false` | Ask before closing when a process runs |
+
+Adding a theme: copy a block in `~/themes.lua`, change the hex colors, name it,
+then set `theme = "<name>"` in `config.lua`.
+
+The three WezTerm files are: `config.lua` (your options — never overwritten by
+re-installing), `themes.lua` (palettes), `wezterm.lua` (logic — don't edit).
+
 ## Files
 
 ```

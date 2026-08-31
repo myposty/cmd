@@ -122,7 +122,13 @@ deploy() {  # $1 = archivo en dots, $2 = destino
 }
 say "Desplegando configuraciones..."
 deploy indigo-mate.omp.json "$HOME/.config/oh-my-posh/indigo-mate.omp.json"
-deploy wezterm.lua          "$HOME/.wezterm.lua"
+# WezTerm: la logica (wezterm.lua) + tus opciones (config.lua) + los temas (themes.lua).
+# Los tres van al HOME porque .wezterm.lua hace require("config") y require("themes").
+deploy wezterm.lua "$HOME/.wezterm.lua"
+deploy themes.lua  "$HOME/themes.lua"
+# config.lua NO se pisa si ya existe (son TUS opciones); solo se crea la 1ra vez.
+if [ ! -f "$HOME/config.lua" ]; then deploy config.lua "$HOME/config.lua"
+else skip "config.lua (tus opciones, no se pisan)"; fi
 
 # Shell rc: el correcto para el OS.
 if [ "$OS" = "macos" ]; then deploy zshrc "$SHELL_RC"; else deploy bashrc "$SHELL_RC"; fi

@@ -1,101 +1,103 @@
--- ~/.wezterm.lua — configuracion de WezTerm (Lua).
--- Referencia de estilo: Gentleman.Dots. Adaptado a Windows + Git Bash + tema indigo.
+-- ~/.wezterm.lua — LOGICA. No hace falta tocar este archivo.
+-- Tus opciones estan en config.lua; los temas en themes.lua.
+-- Referencia de estilo: Gentleman.Dots. Adaptado a Windows + Git Bash.
 
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
--- ============================================================================
---  Shell por defecto: Git Bash (login shell, para que lea ~/.bash_profile).
--- ============================================================================
-config.default_prog = { "C:/Program Files/Git/bin/bash.exe", "-l" }
+-- --- Cargar settings del usuario y temas (con fallback si faltan) -----------
+local ok_cfg, user = pcall(require, "config")
+if not ok_cfg then user = {} end
+local ok_thm, themes = pcall(require, "themes")
+if not ok_thm then themes = {} end
 
--- ============================================================================
---  Fuente: la Nerd Font que ya instalamos (iconos del prompt).
--- ============================================================================
-config.font = wezterm.font_with_fallback({
-  "CaskaydiaCove Nerd Font",
-  "Cascadia Mono",
-})
-config.font_size = 12.0
-config.line_height = 1.1
+-- Valores por defecto: si config.lua no define algo, se usa esto.
+local function default(v, d) if v == nil then return d else return v end end
+user.theme        = default(user.theme, "indigo")
+user.opacity      = default(user.opacity, 0.82)
+user.win_backdrop = default(user.win_backdrop, "Acrylic")
+user.mac_blur     = default(user.mac_blur, 20)
+user.font         = default(user.font, "CaskaydiaCove Nerd Font")
+user.font_size    = default(user.font_size, 12.0)
+user.line_height  = default(user.line_height, 1.1)
+user.window_buttons        = default(user.window_buttons, true)
+user.tabs_at_bottom        = default(user.tabs_at_bottom, true)
+user.hide_tabs_when_single = default(user.hide_tabs_when_single, true)
+user.confirm_close = default(user.confirm_close, true)
+user.windows_shell = default(user.windows_shell, "C:/Program Files/Git/bin/bash.exe")
 
--- ============================================================================
---  Tema indigo mate (coherente con el prompt de oh-my-posh).
---  Colores propios en vez de un esquema prehecho, para que combine.
--- ============================================================================
+-- --- Shell (solo Windows; Mac/Linux usan el del sistema) --------------------
+if wezterm.target_triple:find("windows") and user.windows_shell then
+  config.default_prog = { user.windows_shell, "-l" }
+end
+
+-- --- Fuente -----------------------------------------------------------------
+config.font = wezterm.font_with_fallback({ user.font, "Cascadia Mono" })
+config.font_size = user.font_size
+config.line_height = user.line_height
+
+-- --- Tema (resuelto desde themes.lua; si el nombre no existe, cae a indigo) --
+local t = themes[user.theme] or themes["indigo"] or {
+  foreground = "#E4E4EF", background = "#1A1A2A", cursor = "#6C6C9E",
+  selection = "#3B3B5C", ansi = {}, brights = {}, tab_active = "#4B4B7A", tab_inactive = "#2E2E4A",
+}
 config.colors = {
-  foreground = "#E4E4EF",
-  background = "#1A1A2A",
-  cursor_bg = "#6C6C9E",
-  cursor_border = "#6C6C9E",
-  cursor_fg = "#1A1A2A",
-  selection_bg = "#3B3B5C",
-  selection_fg = "#E4E4EF",
-  ansi = {
-    "#2E2E4A", "#9E5C6C", "#6C6C9E", "#8A7A5C",
-    "#4B4B7A", "#7A6C9E", "#565676", "#E4E4EF",
-  },
-  brights = {
-    "#3B3B5C", "#b57a8a", "#8a8aba", "#a89a72",
-    "#6c6c9e", "#9a8aba", "#7a7a9a", "#ffffff",
-  },
+  foreground = t.foreground,
+  background = t.background,
+  cursor_bg = t.cursor, cursor_border = t.cursor, cursor_fg = t.background,
+  selection_bg = t.selection, selection_fg = t.foreground,
+  ansi = t.ansi, brights = t.brights,
   tab_bar = {
-    background = "#1A1A2A",
-    active_tab = { bg_color = "#4B4B7A", fg_color = "#E4E4EF" },
-    inactive_tab = { bg_color = "#2E2E4A", fg_color = "#8a8aba" },
-    inactive_tab_hover = { bg_color = "#3B3B5C", fg_color = "#E4E4EF" },
-    new_tab = { bg_color = "#2E2E4A", fg_color = "#8a8aba" },
+    background = t.background,
+    active_tab       = { bg_color = t.tab_active,   fg_color = t.foreground },
+    inactive_tab     = { bg_color = t.tab_inactive, fg_color = t.foreground },
+    inactive_tab_hover = { bg_color = t.selection,  fg_color = t.foreground },
+    new_tab          = { bg_color = t.tab_inactive, fg_color = t.foreground },
   },
 }
 
--- ============================================================================
---  Ventana: look limpio, sutil, sin barra de titulo pesada.
--- ============================================================================
--- Fondo tipo "liquid glass": vidrio esmerilado que difumina lo que hay detras.
--- opacity < 1 deja pasar el fondo; el backdrop del SO lo difumina (blur).
-config.window_background_opacity = 0.82
--- Windows 11: Acrylic = vidrio esmerilado con blur; Mica = tinte translucido mas sutil.
-config.win32_system_backdrop = "Acrylic"
--- macOS: blur nativo del fondo (0 = sin blur, 20 = fuerte).
-config.macos_window_background_blur = 20
--- TITLE | RESIZE = barra de titulo con botones (minimizar/maximizar/cerrar) + bordes.
-config.window_decorations = "TITLE | RESIZE"
+-- --- Fondo: blur / transparencia --------------------------------------------
+config.window_background_opacity = user.opacity
+if user.win_backdrop ~= "Disable" then
+  config.win32_system_backdrop = user.win_backdrop
+end
+config.macos_window_background_blur = user.mac_blur
+
+-- --- Ventana ----------------------------------------------------------------
+config.window_decorations = user.window_buttons and "TITLE | RESIZE" or "RESIZE"
 config.window_padding = { left = 10, right = 10, top = 8, bottom = 8 }
 config.use_fancy_tab_bar = false
-config.hide_tab_bar_if_only_one_tab = true
-config.tab_bar_at_bottom = true
+config.hide_tab_bar_if_only_one_tab = user.hide_tabs_when_single
+config.tab_bar_at_bottom = user.tabs_at_bottom
 
--- Confirmacion al cerrar: pregunta SOLO si hay un proceso real corriendo.
--- Si la terminal esta libre (solo el shell), cierra directo sin molestar.
-config.window_close_confirmation = "AlwaysPrompt"
-config.skip_close_confirmation_for_processes_named = {
-  "bash", "sh", "zsh", "fish", "cmd.exe", "pwsh.exe", "powershell.exe",
-}
+-- --- Confirmacion al cerrar -------------------------------------------------
+if user.confirm_close then
+  config.window_close_confirmation = "AlwaysPrompt"
+  config.skip_close_confirmation_for_processes_named = {
+    "bash", "sh", "zsh", "fish", "cmd.exe", "pwsh.exe", "powershell.exe",
+  }
+else
+  config.window_close_confirmation = "NeverPrompt"
+end
 
--- ============================================================================
---  Rendimiento.
--- ============================================================================
+-- --- Rendimiento ------------------------------------------------------------
 config.max_fps = 120
 config.animation_fps = 60
 config.front_end = "WebGpu"
 
--- ============================================================================
---  Atajos utiles (estilo tmux-lite, sin instalar tmux).
--- ============================================================================
+-- --- Atajos (estilo tmux-lite) ----------------------------------------------
 local act = wezterm.action
 config.keys = {
-  -- Paneles: dividir vertical / horizontal
   { key = "d", mods = "CTRL|SHIFT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
   { key = "e", mods = "CTRL|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
-  -- Moverse entre paneles con Ctrl+Shift+flechas
   { key = "LeftArrow",  mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Left") },
   { key = "RightArrow", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Right") },
   { key = "UpArrow",    mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Up") },
   { key = "DownArrow",  mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Down") },
-  -- Cerrar panel
   { key = "w", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
-  -- Nueva pestana
   { key = "t", mods = "CTRL|SHIFT", action = act.SpawnTab("CurrentPaneDomain") },
+  -- Recargar la config sin cerrar WezTerm (util al cambiar config.lua).
+  { key = "r", mods = "CTRL|SHIFT", action = act.ReloadConfiguration },
 }
 
 return config
