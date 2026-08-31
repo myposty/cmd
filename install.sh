@@ -198,6 +198,54 @@ if [ "$OS" = "windows" ] && [ -t 0 ]; then
 fi
 
 # ============================================================================
+#  3d. WezTerm como terminal POR DEFECTO del sistema (PREGUNTA). Asi al abrir
+#      una consola nueva de Windows se lanza WezTerm en vez de la consola vieja.
+# ============================================================================
+if [ -t 0 ]; then
+  echo
+  printf '\033[38;5;104m==>\033[0m Pongo WezTerm como tu terminal por defecto del sistema? [s/N] '
+  read -r def
+  case "$def" in
+    s|S|y|Y)
+      case "$OS" in
+        windows)
+          # Windows 11: el "terminal predeterminado" se guarda en el registro.
+          # Apuntamos la delegacion de consola al wezterm-gui instalado.
+          wt=""
+          for p in "$HOME/scoop/apps/wezterm-nightly/current/wezterm-gui.exe" \
+                   "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe"; do
+            [ -f "$p" ] && { wt="$p"; break; }
+          done
+          if [ -n "$wt" ]; then
+            wt_win=$(cygpath -w "$wt" 2>/dev/null || echo "$wt")
+            # Registra WezTerm como app de consola por defecto (Startup > Default terminal).
+            reg add "HKCU\\Console\\%%Startup" /v DelegationConsole /t REG_SZ /d "{2EACA947-7F5F-4CFA-BA87-8F7FBEEFBE69}" /f >/dev/null 2>&1
+            reg add "HKCU\\Console\\%%Startup" /v DelegationTerminal /t REG_SZ /d "{E12CFF52-A866-4C77-9A90-F570A7AA2C6B}" /f >/dev/null 2>&1
+            ok "WezTerm marcado. Si Windows no lo respeta, ponelo a mano:"
+            echo "     Configuracion > Privacidad > Para desarrolladores > Terminal > WezTerm"
+            echo "     (o en WezTerm: no todas las builds registran el GUID; el paso manual es 1 click)"
+          else
+            err "No encontre wezterm-gui para registrar"
+          fi ;;
+        macos)
+          echo "   En macOS no hay 'terminal por defecto' del sistema como en Windows."
+          echo "   WezTerm ya esta en /Applications; anclalo al Dock para tenerlo a mano." ;;
+        linux)
+          # En Linux se hace via update-alternatives (x-terminal-emulator) en Debian/Ubuntu.
+          if command -v update-alternatives >/dev/null 2>&1 && command -v wezterm >/dev/null 2>&1; then
+            sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$(command -v wezterm)" 50 >/dev/null 2>&1 \
+              && sudo update-alternatives --set x-terminal-emulator "$(command -v wezterm)" >/dev/null 2>&1 \
+              && ok "WezTerm como x-terminal-emulator por defecto" \
+              || echo "   Configuralo en tu entorno de escritorio (Settings > Default Applications)."
+          else
+            echo "   Configuralo en tu entorno de escritorio (Settings > Default Applications)."
+          fi ;;
+      esac ;;
+    *) echo "   Dejo tu terminal por defecto como esta." ;;
+  esac
+fi
+
+# ============================================================================
 #  4. Desplegar configuraciones (con backup si ya existian y difieren).
 # ============================================================================
 deploy() {  # $1 = archivo en dots, $2 = destino

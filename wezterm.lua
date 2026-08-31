@@ -218,12 +218,19 @@ local function theme_picker()
     local choices = {}
     for _, name in ipairs(names) do
       local th = themes[name]
-      -- Bloques de color: fondo + 6 colores representativos de la paleta.
-      local swatch = { { Background = { Color = th.background } }, { Foreground = { Color = th.foreground } }, { Text = " " .. name .. " " } }
-      local palette = { th.ansi[2], th.ansi[3], th.ansi[5], th.ansi[6], th.ansi[7], th.cursor }
+      -- Nombre a ANCHO FIJO (18) para que las barras arranquen todas parejas.
+      local padded = string.format(" %-18s ", name)
+      local swatch = {
+        "ResetAttributes",
+        { Background = { Color = th.background } },
+        { Foreground = { Color = th.foreground } },
+        { Text = padded },
+      }
+      -- Paleta: 6 colores en bloques del MISMO ancho, pegados, sin fondo entre medio.
+      local palette = { th.ansi[2], th.ansi[3], th.ansi[4], th.ansi[5], th.ansi[6], th.cursor }
       for _, c in ipairs(palette) do
         table.insert(swatch, { Background = { Color = c } })
-        table.insert(swatch, { Text = "  " })
+        table.insert(swatch, { Text = "   " })  -- 3 espacios = bloque de color parejo
       end
       table.insert(swatch, "ResetAttributes")
       table.insert(choices, { label = wezterm.format(swatch), id = name })
