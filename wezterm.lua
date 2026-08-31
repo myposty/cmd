@@ -322,8 +322,8 @@ config.keys = {
   -- PANEL DE CONTROL EN VIVO (teclas simples, sin combinaciones raras):
   { key = "F12", action = adjust_opacity(0.05) },   -- mas opaco
   { key = "F11", action = adjust_opacity(-0.05) },  -- mas transparente
-  { key = "F10", action = cycle_theme(1) },         -- tema SIGUIENTE (aplica en vivo)
-  { key = "F9",  action = cycle_theme(-1) },        -- tema ANTERIOR (aplica en vivo)
+  { key = ".", mods = "CTRL|SHIFT", action = cycle_theme(1) },   -- tema SIGUIENTE (aplica en vivo)
+  { key = ",", mods = "CTRL|SHIFT", action = cycle_theme(-1) },  -- tema ANTERIOR (aplica en vivo)
   { key = "b", mods = "CTRL|SHIFT", action = toggle_blur() },      -- blur on/off
   { key = "p", mods = "CTRL|SHIFT", action = theme_picker() },     -- menu de temas (con paleta)
   { key = "0", mods = "CTRL|SHIFT", action = act.ResetFontSize },  -- resetear zoom
