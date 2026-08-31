@@ -51,7 +51,13 @@ config.colors = {
 -- ============================================================================
 --  Ventana: look limpio, sutil, sin barra de titulo pesada.
 -- ============================================================================
-config.window_background_opacity = 0.98
+-- Fondo tipo "liquid glass": vidrio esmerilado que difumina lo que hay detras.
+-- opacity < 1 deja pasar el fondo; el backdrop del SO lo difumina (blur).
+config.window_background_opacity = 0.82
+-- Windows 11: Acrylic = vidrio esmerilado con blur; Mica = tinte translucido mas sutil.
+config.win32_system_backdrop = "Acrylic"
+-- macOS: blur nativo del fondo (0 = sin blur, 20 = fuerte).
+config.macos_window_background_blur = 20
 -- TITLE | RESIZE = barra de titulo con botones (minimizar/maximizar/cerrar) + bordes.
 config.window_decorations = "TITLE | RESIZE"
 config.window_padding = { left = 10, right = 10, top = 8, bottom = 8 }

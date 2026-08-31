@@ -136,9 +136,10 @@ fi
 # ============================================================================
 #  5. Pre-generar caches de init (arranque rapido en la 1ra terminal).
 # ============================================================================
-say "Generando caches de init..."
+say "Regenerando caches de init (limpia los viejos primero)..."
 mkdir -p ~/.cache/sh-init
 ext="sh"; [ "$OMP_SHELL" = "zsh" ] && ext="zsh"
+rm -f ~/.cache/sh-init/omp.$ext ~/.cache/sh-init/atuin.$ext ~/.cache/sh-init/zoxide.$ext 2>/dev/null
 have oh-my-posh && oh-my-posh init "$OMP_SHELL" $([ "$OMP_SHELL" = bash ] && echo --print) --config ~/.config/oh-my-posh/indigo-mate.omp.json > ~/.cache/sh-init/omp.$ext    2>/dev/null && ok "cache omp"
 have atuin      && atuin init  "$OMP_SHELL" > ~/.cache/sh-init/atuin.$ext  2>/dev/null && ok "cache atuin"
 have zoxide     && zoxide init "$OMP_SHELL" > ~/.cache/sh-init/zoxide.$ext 2>/dev/null && ok "cache zoxide"
@@ -148,5 +149,21 @@ have zoxide     && zoxide init "$OMP_SHELL" > ~/.cache/sh-init/zoxide.$ext 2>/de
 # ============================================================================
 echo
 say "Listo en $OS."
-echo "   Abri WezTerm. Arranca con el shell nativo, la Nerd Font y el tema indigo."
-echo "   Regenerar un cache tras actualizar: rm ~/.cache/sh-init/<omp|atuin|zoxide>.$ext"
+echo "   WezTerm arranca con el shell nativo, la Nerd Font y el tema indigo."
+echo "   Los caches se regeneraron; no hay que limpiar nada a mano."
+echo
+
+# Preguntar si abrir WezTerm (solo si esta instalado y hay una TTY interactiva).
+if have wezterm && [ -t 0 ]; then
+  printf '\033[38;5;104m==>\033[0m Abro WezTerm ahora? [s/N] '
+  read -r ans
+  case "$ans" in
+    s|S|y|Y)
+      case "$OS" in
+        windows) "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe" start >/dev/null 2>&1 & ;;
+        *)       wezterm start >/dev/null 2>&1 & ;;
+      esac
+      ok "WezTerm lanzado." ;;
+    *) echo "   Cuando quieras: wezterm-gui (Windows) o wezterm (Mac/Linux)." ;;
+  esac
+fi
