@@ -96,11 +96,13 @@ function paletteFor(t) {
 // Token base de cada segmento + variantes (estado del git / error del status).
 const SEG = {
   os:            { bg: "indigo-dark" },
+  root:          { bg: "danger" },      // admin/root -> rojo (destaca)
   path:          { bg: "indigo-mid" },
   node:          { bg: "indigo" },
   go:            { bg: "indigo" },
   python:        { bg: "indigo" },
   executiontime: { bg: "amber-muted" },
+  battery:       { bg: "indigo" },      // bateria
   time:          { bg: "indigo-light" },
   git:           { bg: "indigo-light", variants: { "violet-muted": "dirty", danger: "danger", indigo: "ahead" } },
   status:        { bg: "indigo-darkest", variants: { danger: "error" } },

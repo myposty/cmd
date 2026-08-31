@@ -28,6 +28,14 @@
           "type": "os"
         },
         {
+          "background": "p:danger",
+          "foreground": "#ffffff",
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": "  ",
+          "type": "root"
+        },
+        {
           "background": "p:indigo-mid",
           "foreground": "#ffffff",
           "powerline_symbol": "",
@@ -108,7 +116,25 @@
           "powerline_symbol": "",
           "style": "powerline",
           "template": " {{ .FormattedMs }}  ",
+          "options": {
+            "threshold": 500,
+            "style": "austin"
+          },
           "type": "executiontime"
+        },
+        {
+          "background": "p:indigo",
+          "foreground": "#111111",
+          "invert_powerline": true,
+          "options": {
+            "charged_icon": " ",
+            "charging_icon": " ",
+            "discharging_icon": " "
+          },
+          "style": "powerline",
+          "powerline_symbol": "",
+          "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}%{{ end }} ",
+          "type": "battery"
         },
         {
           "background": "p:indigo-darkest",
