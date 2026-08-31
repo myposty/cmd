@@ -151,6 +151,10 @@ deploy() {  # $1 = archivo en dots, $2 = destino
 }
 say "Desplegando configuraciones..."
 deploy indigo-mate.omp.json "$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+deploy VERSION "$HOME/.config/cmd/VERSION"  # version instalada (para el aviso de update)
+# Refresca el aviso: al instalar, la version local pasa a ser la actual, asi el
+# banner de "hay version nueva" desaparece hasta que el repo suba otra.
+rm -f ~/.cache/cmd-latest-version ~/.cache/cmd-version-checked 2>/dev/null
 # WezTerm: la logica (wezterm.lua) + tus opciones (config.lua) + los temas (themes.lua).
 # Los tres van al HOME porque .wezterm.lua hace require("config") y require("themes").
 deploy wezterm.lua "$HOME/.wezterm.lua"

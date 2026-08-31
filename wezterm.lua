@@ -183,28 +183,47 @@ local function toggle_blur()
   end)
 end
 
--- Menu para elegir tema en vivo (Ctrl+Shift+P).
+-- Aplica un tema a la ventana (usado por el picker y el preview en vivo).
+local function apply_theme(win, th)
+  local ov = win:get_config_overrides() or {}
+  ov.colors = {
+    foreground = th.foreground, background = th.background,
+    cursor_bg = th.cursor, cursor_border = th.cursor, cursor_fg = th.background,
+    selection_bg = th.selection, selection_fg = th.foreground,
+    ansi = th.ansi, brights = th.brights,
+  }
+  win:set_config_overrides(ov)
+end
+
+-- Menu de temas CON VISTA PREVIA de la paleta (Ctrl+Shift+P).
+-- Cada opcion muestra bloques de color del tema al lado del nombre, asi ves
+-- como se ve ANTES de aplicarlo. Enter lo aplica; ESC cancela.
 local function theme_picker()
   return wezterm.action_callback(function(window, pane)
-    if not themes then return end  -- sin themes.lua no hay menu
+    if not themes then return end
+    local names = {}
+    for name, _ in pairs(themes) do table.insert(names, name) end
+    table.sort(names)
     local choices = {}
-    for name, _ in pairs(themes) do table.insert(choices, { label = name }) end
-    table.sort(choices, function(a, b) return a.label < b.label end)
+    for _, name in ipairs(names) do
+      local th = themes[name]
+      -- Bloques de color: fondo + 6 colores representativos de la paleta.
+      local swatch = { { Background = { Color = th.background } }, { Foreground = { Color = th.foreground } }, { Text = " " .. name .. " " } }
+      local palette = { th.ansi[2], th.ansi[3], th.ansi[5], th.ansi[6], th.ansi[7], th.cursor }
+      for _, c in ipairs(palette) do
+        table.insert(swatch, { Background = { Color = c } })
+        table.insert(swatch, { Text = "  " })
+      end
+      table.insert(swatch, "ResetAttributes")
+      table.insert(choices, { label = wezterm.format(swatch), id = name })
+    end
     window:perform_action(act.InputSelector({
-      title = "Elegi un tema",
+      title = "Elegi un tema  (las barras de color son la paleta de cada uno)",
       choices = choices,
-      action = wezterm.action_callback(function(win, _, _, label)
-        if not label then return end
-        local th = themes[label]
-        local ov = win:get_config_overrides() or {}
-        ov.colors = {
-          foreground = th.foreground, background = th.background,
-          cursor_bg = th.cursor, cursor_border = th.cursor, cursor_fg = th.background,
-          selection_bg = th.selection, selection_fg = th.foreground,
-          ansi = th.ansi, brights = th.brights,
-        }
-        win:set_config_overrides(ov)
-        win:toast_notification("WezTerm", "Tema: " .. label, nil, 1500)
+      action = wezterm.action_callback(function(win, _, id, _)
+        if not id then return end
+        apply_theme(win, themes[id])
+        win:toast_notification("WezTerm", "Tema: " .. id, nil, 1500)
       end),
     }), pane)
   end)

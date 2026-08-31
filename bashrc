@@ -50,6 +50,28 @@ source ~/.cache/sh-init/atuin.sh 2>/dev/null
 _step "atuin"
 type -t _splash_end >/dev/null 2>&1 && _splash_end
 
+# --- Chequeo de version / update (no frena el arranque) ---------------------
+# Compara tu VERSION local con la del repo. Consulta GitHub UNA vez por dia (en
+# background, cacheado), y si hay una nueva version te avisa al abrir. Cero espera.
+if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
+  _CMD_VERSION_URL="https://raw.githubusercontent.com/myposty/cmd/main/VERSION"
+  _local_ver=$(cat ~/.config/cmd/VERSION 2>/dev/null || echo "0.0.0")
+  _ver_cache=~/.cache/cmd-latest-version
+  _ver_stamp=~/.cache/cmd-version-checked
+  # Si ya se aviso hoy, mostramos el aviso cacheado sin volver a consultar.
+  _remote_ver=$(cat "$_ver_cache" 2>/dev/null)
+  if [ -n "$_remote_ver" ] && [ "$_remote_ver" != "$_local_ver" ]; then
+    printf '\e[38;5;176m  ✨ Hay una version nueva de tu terminal: %s -> %s\e[0m\n' "$_local_ver" "$_remote_ver"
+    printf '\e[38;5;60m     Actualiza con:  cd ~/cmd && git pull && bash install.sh\e[0m\n\n'
+  fi
+  # Consulta a GitHub en background, una vez por dia, sin bloquear el prompt.
+  if [ ! -f "$_ver_stamp" ] || [ "$(find "$_ver_stamp" -mtime +1 2>/dev/null)" ]; then
+    ( curl -fsSL --max-time 3 "$_CMD_VERSION_URL" 2>/dev/null | tr -d '[:space:]' > "$_ver_cache.tmp" \
+      && mv "$_ver_cache.tmp" "$_ver_cache" && touch "$_ver_stamp" ) &
+    disown 2>/dev/null
+  fi
+fi
+
 # --- `cd` INTELIGENTE -------------------------------------------------------
 # Escribi "cd nombre":
 #   - Si "nombre" ES una carpeta exacta        -> entra normal (cd de siempre).
