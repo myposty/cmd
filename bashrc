@@ -157,12 +157,16 @@ help() {
   printf '  %sTip: escribi %shelp%s%s cuando quieras volver a ver esto.%s\n\n' "$D" "$K" "$R" "$D" "$R"
 }
 if [[ $- == *i* ]]; then
-  _k=$'\e[38;5;109m'; _d=$'\e[38;5;242m'; _s=$'\e[38;5;238m'; _r=$'\e[0m'
-  # dos lineas alineadas, tono apagado para que no compita con el prompt.
-  printf '%s  %scd%s %sz%s carpetas%s   %s%sCtrl+F%s buscar%s   %s%sCtrl+R%s historial%s\n' \
-    "$_d" "$_k" "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r"
-  printf '%s  %sCtrl+Shift+.%s tema%s   %s%sF11/F12%s opacidad%s   %s%shelp%s ver todo%s\n\n' \
-    "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r" "$_d" "$_k" "$_d" "$_r"
+  _k=$'\e[38;5;109m'; _a=$'\e[38;5;66m'; _d=$'\e[38;5;245m'; _r=$'\e[0m'
+  # cada linea: el comando con un EJEMPLO + que hace, en criollo. Clave alineada.
+  _row() { printf '   %s%-16s%s %s→%s %s%s%s\n' "$_k" "$1" "$_r" "$_a" "$_r" "$_d" "$2" "$_r"; }
+  printf '%s  Que podes hacer:%s\n' "$_a" "$_r"
+  _row "cd fuse"      "entra a la carpeta \"fuse\" aunque no sepas donde esta"
+  _row "z fuse"       "salto rapido a una carpeta que ya visitaste antes"
+  _row "Ctrl+R"       "busca un comando que ya escribiste (tu historial)"
+  _row "Ctrl+Shift+." "cambia el tema de colores de la terminal"
+  _row "help"         "ver la lista completa de comandos y atajos"
+  printf '\n'
 fi
 
 # --- `cd` INTELIGENTE -------------------------------------------------------
