@@ -30,9 +30,25 @@ fi
 # Helper no-op si no hay splash (shell no interactivo), para no romper las llamadas.
 type -t _step >/dev/null 2>&1 || _step() { :; }
 
-# --- PROMPT (oh-my-posh) -----------------------------------------------------
-[ -s ~/.cache/sh-init/omp.sh ] || oh-my-posh init bash --print --config "$HOME/.config/oh-my-posh/indigo-mate.omp.json" > ~/.cache/sh-init/omp.sh 2>/dev/null
+# --- PROMPT (oh-my-posh) — sigue al tema activo ------------------------------
+# El tema activo se guarda en ~/.cache/cmd-theme (lo escribe WezTerm al cambiarlo).
+# Cada prompt usa el .omp.json de ESE tema, asi el prompt cambia con el tema.
+_omp_theme() { cat ~/.cache/cmd-theme 2>/dev/null || echo "indigo"; }
+_omp_config() {
+  local t; t=$(_omp_theme)
+  local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
+  [ -s "$f" ] && echo "$f" || echo "$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+}
+# oh-my-posh lee POSH_CONFIG en CADA prompt, asi que cambiar esa variable cambia
+# el prompt EN VIVO, sin reiniciar el shell. El init se cachea una vez.
+[ -s ~/.cache/sh-init/omp.sh ] || oh-my-posh init bash --print --config "$(_omp_config)" > ~/.cache/sh-init/omp.sh 2>/dev/null
 source ~/.cache/sh-init/omp.sh 2>/dev/null
+# En cada prompt, sincroniza POSH_CONFIG con el tema activo (barato: un cat).
+_omp_sync_theme() {
+  local want; want="$(_omp_config)"
+  [ "$want" != "$POSH_CONFIG" ] && export POSH_CONFIG="$want"
+}
+PROMPT_COMMAND="_omp_sync_theme;${PROMPT_COMMAND:-}"
 _step "prompt"
 
 # --- Historial grande, sin duplicados. --------------------------------------

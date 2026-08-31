@@ -194,8 +194,8 @@ local function toggle_blur()
   end)
 end
 
--- Aplica un tema a la ventana (usado por el picker y el ciclado en vivo).
-local function apply_theme(win, th)
+-- Aplica un tema a la ventana Y avisa al shell (para que el prompt lo siga).
+local function apply_theme(win, th, name)
   local ov = win:get_config_overrides() or {}
   ov.colors = {
     foreground = th.foreground, background = th.background,
@@ -204,6 +204,11 @@ local function apply_theme(win, th)
     ansi = th.ansi, brights = th.brights,
   }
   win:set_config_overrides(ov)
+  -- Escribe el tema activo donde el .bashrc lo lee, asi el prompt cambia tambien.
+  if name then
+    local f = io.open(home .. "/.cache/cmd-theme", "w")
+    if f then f:write(name); f:close() end
+  end
 end
 
 -- Lista ordenada de nombres de temas (para ciclar).
@@ -222,7 +227,7 @@ local function cycle_theme(dir)
     if #_theme_names == 0 then return end
     _theme_idx = ((_theme_idx - 1 + dir) % #_theme_names) + 1
     local name = _theme_names[_theme_idx]
-    apply_theme(window, themes[name])
+    apply_theme(window, themes[name], name)
     window:toast_notification("WezTerm", "Tema: " .. name .. "  (" .. _theme_idx .. "/" .. #_theme_names .. ")", nil, 1200)
   end)
 end
@@ -261,7 +266,7 @@ local function theme_picker()
       choices = choices,
       action = wezterm.action_callback(function(win, _, id, _)
         if not id then return end
-        apply_theme(win, themes[id])
+        apply_theme(win, themes[id], id)
         win:toast_notification("WezTerm", "Tema: " .. id, nil, 1500)
       end),
     }), pane)

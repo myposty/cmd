@@ -1,0 +1,115 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "palette": {
+    "s-os": "#3e4446",
+    "s-path": "#4b4f4f",
+    "s-accent": "#A7C080",
+    "s-accent2": "#A7C080",
+    "s-dark": "#262d32",
+    "danger": "#2D353B",
+    "text": "#D3C6AA",
+    "text-on-accent": "#2D353B",
+    "line": "#A7C080"
+  },
+  "blocks": [
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "segments": [
+        {
+          "background": "p:s-os",
+          "foreground": "p:text",
+          "leading_diamond": "╭─",
+          "style": "diamond",
+          "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
+          "type": "os"
+        },
+        {
+          "background": "p:s-path",
+          "foreground": "p:text",
+          "powerline_symbol": "",
+          "options": {
+            "home_icon": "~",
+            "style": "full"
+          },
+          "style": "powerline",
+          "template": "  {{ .Path }} ",
+          "type": "path"
+        },
+        {
+          "background": "p:s-accent",
+          "foreground": "p:text-on-accent",
+          "background_templates": [
+            "{{ if or (.Working.Changed) (.Staging.Changed) }}p:s-accent2{{ end }}"
+          ],
+          "powerline_symbol": "",
+          "options": {
+            "branch_icon": " ",
+            "fetch_status": true,
+            "fetch_upstream_icon": true
+          },
+          "style": "powerline",
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} ",
+          "type": "git"
+        }
+      ]
+    },
+    {
+      "alignment": "right",
+      "type": "prompt",
+      "segments": [
+        {
+          "background": "p:s-dark",
+          "background_templates": [
+            "{{ if gt .Code 0 }}p:danger{{ end }}"
+          ],
+          "foreground": "p:text",
+          "invert_powerline": true,
+          "powerline_symbol": "",
+          "options": {
+            "always_enabled": true
+          },
+          "style": "powerline",
+          "template": " {{ if gt .Code 0 }}{{ reason .Code }}{{ else }}{{ end }} ",
+          "type": "status"
+        },
+        {
+          "background": "p:s-accent",
+          "foreground": "p:text-on-accent",
+          "invert_powerline": true,
+          "style": "diamond",
+          "template": " {{ .CurrentDate | date .Format }}  ",
+          "trailing_diamond": "─╮",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "alignment": "left",
+      "newline": true,
+      "type": "prompt",
+      "segments": [
+        {
+          "foreground": "p:line",
+          "style": "plain",
+          "template": "╰─",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "rprompt",
+      "segments": [
+        {
+          "foreground": "p:line",
+          "style": "plain",
+          "template": "─╯",
+          "type": "text"
+        }
+      ]
+    }
+  ],
+  "console_title_template": "{{ .Shell }} in {{ .Folder }}",
+  "final_space": true,
+  "version": 4
+}
