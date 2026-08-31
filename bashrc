@@ -103,9 +103,11 @@ if [[ $- == *i* ]] && command -v curl >/dev/null 2>&1; then
   _ver_cache=~/.cache/cmd-latest-version
   _ver_stamp=~/.cache/cmd-version-checked
   _remote_ver=$(cat "$_ver_cache" 2>/dev/null)
+  # Solo ofrece update si la del repo es MAS NUEVA (no si es distinta o menor).
+  _newest=$(printf '%s\n%s\n' "$_local_ver" "$_remote_ver" | sort -V 2>/dev/null | tail -1)
   # Hay update -> PREGUNTA. Si aceptas, actualiza A LA VISTA y recarga el prompt
   # al instante (sin reabrir). Respeta tu tema elegido (no toca cmd-theme).
-  if [ -n "$_remote_ver" ] && [ "$_remote_ver" != "$_local_ver" ] && [ -t 0 ]; then
+  if [ -n "$_remote_ver" ] && [ "$_remote_ver" = "$_newest" ] && [ "$_remote_ver" != "$_local_ver" ] && [ -t 0 ]; then
     printf '\e[38;5;176m  ✨ Hay una version nueva de tu terminal: %s -> %s\e[0m\n' "$_local_ver" "$_remote_ver"
     printf '\e[38;5;104m  ¿Actualizar ahora? [S/n] \e[0m'
     read -r _ans
