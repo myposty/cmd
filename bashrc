@@ -25,42 +25,41 @@ zi() { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; zi "$@"; }
 # primer comando). atuin regenera su cache con --disable-up-arrow quitado.
 source ~/.cache/sh-init/atuin.sh 2>/dev/null
 
-# --- Auto-listar al entrar a una carpeta (eza si esta, si no ls). ------------
-cd() { builtin cd "$@" && { eza --icons --group-directories-first -a 2>/dev/null || ls -A --color=auto; }; }
-
-# --- Autocompletado NATIVO mejorado (Tab) -----------------------------------
-# Tab lista/completa sin importar mayusculas, muestra menu al primer Tab,
-# y marca los directorios. Todo readline nativo, cero dependencias, 0ms.
-bind 'set completion-ignore-case on'      2>/dev/null  # da igual mayus/minus
-bind 'set show-all-if-ambiguous on'       2>/dev/null  # 1 solo Tab muestra la lista
-bind 'set menu-complete-display-prefix on' 2>/dev/null # completa el prefijo comun
-bind 'set colored-stats on'               2>/dev/null  # directorios con color
-bind 'set mark-directories on'            2>/dev/null  # / al final de carpetas
-bind 'set visible-stats on'               2>/dev/null  # marca tipo de archivo
-bind 'TAB:menu-complete'                  2>/dev/null  # Tab cicla las opciones
-bind '"\e[Z":menu-complete-backward'      2>/dev/null  # Shift+Tab cicla al reves
-
-# --- `d <nombre>`: salta a una carpeta por nombre, estes donde estes --------
-# Busca directorios que contengan <nombre> en tus carpetas de proyecto.
-# Uno solo -> hace cd directo. Varios -> los lista arriba y elegis por numero.
-# Bash + fd nativo (o find). Cero servicios de fondo.
-_d_roots=( ~/Desktop/proyect ~/Desktop/WORK ~/Desktop/backend-local ~/Desktop )
-d() {
-  local q="$1" matches=() dir
-  [ -z "$q" ] && { echo "uso: d <nombre-de-carpeta>"; return 1; }
-  # fd es rapidisimo; si no esta, cae a find. Ignora ruido.
+# --- `cd` INTELIGENTE -------------------------------------------------------
+# Escribi "cd nombre":
+#   - Si "nombre" ES una carpeta exacta        -> entra normal (cd de siempre).
+#   - Si NO, busca carpetas que coincidan y abre un menu con FLECHAS + Enter.
+#   - Sin argumento -> cd al HOME (como el cd normal).
+# Al entrar, lista el contenido. Menu con flechas via fzf.
+_cd_roots=( ~/Desktop/proyect ~/Desktop/WORK ~/Desktop/backend-local ~/Desktop )
+cd() {
+  local target="$1"
+  if [ -z "$target" ]; then
+    builtin cd ~ && _cd_ls; return
+  fi
+  # 1) Si es una ruta que existe, entra directo (comportamiento normal).
+  if [ -d "$target" ]; then
+    builtin cd "$target" && _cd_ls; return
+  fi
+  # 2) No existe tal cual -> busco carpetas que coincidan por nombre.
+  local results
   if command -v fd >/dev/null 2>&1; then
-    while IFS= read -r dir; do matches+=("$dir"); done < <(fd -t d -i -d 5 "$q" "${_d_roots[@]}" 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build|/\.next|vendor" | head -30)
+    results=$(fd -t d -i -d 5 "$target" "${_cd_roots[@]}" 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build|/\.next|vendor")
   else
-    while IFS= read -r dir; do matches+=("$dir"); done < <(find "${_d_roots[@]}" -maxdepth 5 -type d -iname "*$q*" 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build" | head -30)
+    results=$(find "${_cd_roots[@]}" -maxdepth 5 -type d -iname "*$target*" 2>/dev/null | grep -viE "node_modules|/\.git|/dist|/build")
   fi
-  local n=${#matches[@]}
-  if   [ "$n" -eq 0 ]; then echo "sin coincidencias para '$q'"; return 1
-  elif [ "$n" -eq 1 ]; then cd "${matches[0]}"
+  if [ -z "$results" ]; then
+    echo "cd: no existe '$target' ni hay carpetas que coincidan"; return 1
+  fi
+  # 3) Menu con flechas + Enter (fzf). Una sola coincidencia -> entra directo.
+  local choice
+  if command -v fzf >/dev/null 2>&1; then
+    choice=$(printf '%s\n' "$results" | fzf --height=40% --reverse --prompt="cd> " \
+      --preview 'eza --icons --color=always {} 2>/dev/null || ls -A {}' --preview-window=right:50%)
   else
-    echo "Carpetas con '$q':"
-    local i=1; for dir in "${matches[@]}"; do printf "  %2d) %s\n" "$i" "$dir"; i=$((i+1)); done
-    printf "Elegi [1-%d]: " "$n"; local sel; read -r sel
-    [[ "$sel" =~ ^[0-9]+$ ]] && [ "$sel" -ge 1 ] && [ "$sel" -le "$n" ] && cd "${matches[$((sel-1))]}" || echo "cancelado"
+    choice=$(printf '%s\n' "$results" | head -1)  # sin fzf, la primera
   fi
+  [ -n "$choice" ] && builtin cd "$choice" && _cd_ls
 }
+# Lista el contenido al entrar (eza si esta, si no ls).
+_cd_ls() { eza --icons --group-directories-first -a 2>/dev/null || ls -A --color=auto; }
