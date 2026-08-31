@@ -20,10 +20,11 @@
         {
           "background": "p:indigo-dark",
           "foreground": "p:text-light",
-          "leading_diamond": "╭─",
-          "style": "diamond",
+          "leading_diamond": "",
+          "style": "powerline",
           "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
-          "type": "os"
+          "type": "os",
+          "powerline_symbol": ""
         },
         {
           "background": "p:danger",
