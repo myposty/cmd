@@ -1,3 +1,9 @@
+## 1.8.0
+- Ghost text: mientras escribis, te sugiere en gris el comando del historial que
+  coincide. Flecha derecha (o End) acepta; Alt+Right acepta una palabra. En bash es
+  bash-autosuggestions (liviano, no reemplaza readline); en macOS zsh-autosuggestions.
+  La flecha arriba sigue abriendo el buscador de atuin (no se pisan)
+
 ## 1.7.0
 - RAM, CPU y bateria ahora viven SOLO en la barra de WezTerm (en vivo, cambian
   solos). El prompt de arriba se simplifico: dejo el check, el tiempo de ejecucion

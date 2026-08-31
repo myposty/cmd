@@ -67,6 +67,13 @@ z()  { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; z "$@"; }
 zi() { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; zi "$@"; }
 _step "zoxide"
 
+# --- Ghost text: sugiere el comando del historial mientras escribis. --------
+# Aparece en gris despues del cursor; Right/End acepta, Alt+Right acepta 1 palabra.
+# Se carga ANTES de atuin A PROPOSITO: bindea Up/Down para ciclar, pero atuin los
+# re-bindea despues y gana -> la flecha arriba sigue abriendo TU buscador de atuin.
+[ -s ~/.local/share/bash-autosuggestions/bash-autosuggestions.sh ] \
+  && source ~/.local/share/bash-autosuggestions/bash-autosuggestions.sh 2>/dev/null
+
 # --- atuin: FLECHA ARRIBA y Ctrl+R abren el buscador de historial. ----------
 source ~/.cache/sh-init/atuin.sh 2>/dev/null
 _step "atuin"
@@ -90,6 +97,8 @@ __cmd_update() {
   cp "$repo"/bashrc      ~/.bashrc       2>/dev/null
   cp "$repo"/VERSION     ~/.config/cmd/VERSION 2>/dev/null   # ultimo: marca actualizado
   rm -f ~/.cache/sh-init/omp.sh   # regenera el cache del prompt
+  # ghost text: lo clona la 1ra vez que actualizas (equipos que ya estaban instalados)
+  [ -d ~/.local/share/bash-autosuggestions ] || git clone -q --depth 1 https://github.com/yogeek/bash-autosuggestions ~/.local/share/bash-autosuggestions 2>/dev/null
   return 0
 }
 # Muestra el changelog de una version (la seccion "## X" de CHANGELOG.md).
