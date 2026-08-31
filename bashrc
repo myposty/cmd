@@ -37,7 +37,10 @@ _omp_theme() { cat ~/.cache/cmd-theme 2>/dev/null || echo "indigo"; }
 _omp_config() {
   local t; t=$(_omp_theme)
   local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
-  [ -s "$f" ] && echo "$f" || echo "$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+  [ -s "$f" ] || f="$HOME/.config/oh-my-posh/indigo-mate.omp.json"
+  # oh-my-posh en Windows necesita la ruta en formato Windows (C:\...), NO /c/...
+  # Sin esto, cambiar el tema deja el prompt en indigo porque no lee el archivo.
+  cygpath -w "$f" 2>/dev/null || echo "$f"
 }
 # oh-my-posh lee POSH_CONFIG en CADA prompt, asi que cambiar esa variable cambia
 # el prompt EN VIVO, sin reiniciar el shell. El init se cachea una vez.

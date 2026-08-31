@@ -1,33 +1,34 @@
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
   "palette": {
-    "s-os": "#dfe1e7",
-    "s-path": "#d2d4dc",
-    "s-accent": "#40A02B",
-    "s-accent2": "#DC8A78",
-    "s-dark": "#cbcdd0",
-    "danger": "#EFF1F5",
-    "text": "#4C4F69",
-    "text-on-accent": "#4C4F69",
-    "line": "#40A02B"
+    "indigo-darkest": "#d7d9dd",
+    "indigo-dark": "#dfe1e7",
+    "indigo-mid": "#1E66F5",
+    "indigo": "#d8dae1",
+    "indigo-light": "#40A02B",
+    "violet-muted": "#DF8E1D",
+    "amber-muted": "#d8dae1",
+    "danger": "#D20F39",
+    "text-light": "#4C4F69",
+    "text-dark": "#EFF1F5",
+    "line": "#1E66F5"
   },
   "blocks": [
     {
       "alignment": "left",
-      "type": "prompt",
       "segments": [
         {
-          "background": "p:s-os",
-          "foreground": "p:text",
-          "leading_diamond": "╭─",
+          "background": "p:indigo-dark",
+          "foreground": "p:text-light",
+          "leading_diamond": "╭─",
           "style": "diamond",
           "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
           "type": "os"
         },
         {
-          "background": "p:s-path",
-          "foreground": "p:text",
-          "powerline_symbol": "",
+          "background": "p:indigo-mid",
+          "foreground": "p:text-light",
+          "powerline_symbol": "",
           "options": {
             "home_icon": "~",
             "style": "full"
@@ -37,35 +38,84 @@
           "type": "path"
         },
         {
-          "background": "p:s-accent",
-          "foreground": "p:text-on-accent",
+          "background": "p:indigo-light",
           "background_templates": [
-            "{{ if or (.Working.Changed) (.Staging.Changed) }}p:s-accent2{{ end }}"
+            "{{ if or (.Working.Changed) (.Staging.Changed) }}p:violet-muted{{ end }}",
+            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:danger{{ end }}",
+            "{{ if gt .Ahead 0 }}p:indigo{{ end }}",
+            "{{ if gt .Behind 0 }}p:indigo{{ end }}"
           ],
-          "powerline_symbol": "",
+          "foreground": "p:text-dark",
+          "powerline_symbol": "",
           "options": {
             "branch_icon": " ",
             "fetch_status": true,
             "fetch_upstream_icon": true
           },
           "style": "powerline",
-          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} ",
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} ",
           "type": "git"
         }
-      ]
+      ],
+      "type": "prompt"
     },
     {
       "alignment": "right",
-      "type": "prompt",
       "segments": [
         {
-          "background": "p:s-dark",
+          "background": "p:indigo",
+          "foreground": "p:text-light",
+          "invert_powerline": true,
+          "powerline_symbol": "",
+          "options": {
+            "fetch_version": true
+          },
+          "style": "powerline",
+          "template": " {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}  ",
+          "type": "node"
+        },
+        {
+          "background": "p:indigo",
+          "foreground": "p:text-light",
+          "invert_powerline": true,
+          "powerline_symbol": "",
+          "options": {
+            "fetch_version": true
+          },
+          "style": "powerline",
+          "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}  ",
+          "type": "go"
+        },
+        {
+          "background": "p:indigo",
+          "foreground": "p:text-light",
+          "invert_powerline": true,
+          "powerline_symbol": "",
+          "options": {
+            "display_mode": "files",
+            "fetch_virtual_env": false
+          },
+          "style": "powerline",
+          "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}  ",
+          "type": "python"
+        },
+        {
+          "background": "p:amber-muted",
+          "foreground": "p:text-light",
+          "invert_powerline": true,
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": " {{ .FormattedMs }}  ",
+          "type": "executiontime"
+        },
+        {
+          "background": "p:indigo-darkest",
           "background_templates": [
             "{{ if gt .Code 0 }}p:danger{{ end }}"
           ],
-          "foreground": "p:text",
+          "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "always_enabled": true
           },
@@ -74,20 +124,20 @@
           "type": "status"
         },
         {
-          "background": "p:s-accent",
-          "foreground": "p:text-on-accent",
+          "background": "p:indigo-light",
+          "foreground": "p:text-dark",
           "invert_powerline": true,
           "style": "diamond",
           "template": " {{ .CurrentDate | date .Format }}  ",
-          "trailing_diamond": "─╮",
+          "trailing_diamond": "─╮",
           "type": "time"
         }
-      ]
+      ],
+      "type": "prompt"
     },
     {
       "alignment": "left",
       "newline": true,
-      "type": "prompt",
       "segments": [
         {
           "foreground": "p:line",
@@ -95,10 +145,10 @@
           "template": "╰─",
           "type": "text"
         }
-      ]
+      ],
+      "type": "prompt"
     },
     {
-      "type": "rprompt",
       "segments": [
         {
           "foreground": "p:line",
@@ -106,7 +156,8 @@
           "template": "─╯",
           "type": "text"
         }
-      ]
+      ],
+      "type": "rprompt"
     }
   ],
   "console_title_template": "{{ .Shell }} in {{ .Folder }}",

@@ -1,17 +1,17 @@
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
   "palette": {
-    "indigo-darkest": "black",
-    "indigo-dark": "black",
-    "indigo-mid": "blue",
-    "indigo": "cyan",
-    "indigo-light": "brightBlue",
-    "violet-muted": "magenta",
-    "amber-muted": "yellow",
-    "danger": "red",
-    "text-light": "brightWhite",
-    "text-dark": "black",
-    "line": "brightBlue"
+    "indigo-darkest": "#2E2E4A",
+    "indigo-dark": "#3B3B5C",
+    "indigo-mid": "#4B4B7A",
+    "indigo": "#565676",
+    "indigo-light": "#6C6C9E",
+    "violet-muted": "#7A6C9E",
+    "amber-muted": "#8A7A5C",
+    "danger": "#9E5C6C",
+    "text-light": "#E4E4EF",
+    "text-dark": "#1A1A2A",
+    "line": "#6C6C9E"
   },
   "blocks": [
     {
@@ -20,7 +20,7 @@
         {
           "background": "p:indigo-dark",
           "foreground": "p:text-light",
-          "leading_diamond": "╭─",
+          "leading_diamond": "╭─",
           "style": "diamond",
           "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
           "type": "os"
@@ -28,7 +28,7 @@
         {
           "background": "p:indigo-mid",
           "foreground": "p:text-light",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "home_icon": "~",
             "style": "full"
@@ -46,7 +46,7 @@
             "{{ if gt .Behind 0 }}p:indigo{{ end }}"
           ],
           "foreground": "p:text-dark",
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "branch_icon": " ",
             "fetch_status": true,
@@ -66,7 +66,7 @@
           "background": "p:indigo",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "fetch_version": true
           },
@@ -78,7 +78,7 @@
           "background": "p:indigo",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "fetch_version": true
           },
@@ -90,7 +90,7 @@
           "background": "p:indigo",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "display_mode": "files",
             "fetch_virtual_env": false
@@ -103,7 +103,7 @@
           "background": "p:amber-muted",
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "style": "powerline",
           "template": " {{ .FormattedMs }}  ",
           "type": "executiontime"
@@ -115,7 +115,7 @@
           ],
           "foreground": "p:text-light",
           "invert_powerline": true,
-          "powerline_symbol": "",
+          "powerline_symbol": "",
           "options": {
             "always_enabled": true
           },
@@ -129,7 +129,7 @@
           "invert_powerline": true,
           "style": "diamond",
           "template": " {{ .CurrentDate | date .Format }}  ",
-          "trailing_diamond": "─╮",
+          "trailing_diamond": "─╮",
           "type": "time"
         }
       ],
