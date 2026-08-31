@@ -171,12 +171,7 @@ end)
 --  prompt es un snapshot por comando (un prompt no puede latir solo).
 --  Se apaga con sys_meter=false en config.lua.
 -- ============================================================================
--- Guard: WezTerm ACUMULA los callbacks de wezterm.on en cada recarga de config
--- (no los limpia). Sin esto, tras varios reloads corren N handlers viejos y uno
--- roto puede ganar -> el medidor "se queda" estatico. wezterm.GLOBAL persiste
--- entre reloads: registramos el handler UNA sola vez por sesion.
-if user.sys_meter and not wezterm.GLOBAL.sys_meter_on then
-  wezterm.GLOBAL.sys_meter_on = true
+if user.sys_meter then
   -- SIN daemon (moria al cerrar la pestana y dejaba todo congelado). La barra
   -- lee /proc DIRECTO cada segundo con un bash chico y calcula el delta de CPU
   -- entre ticks -> RAM/CPU cambian solos, estando quieto. WezTerm es nativo (no
