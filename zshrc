@@ -66,11 +66,6 @@ z()  { unfunction z zi; source ~/.cache/sh-init/zoxide.zsh 2>/dev/null; z "$@"; 
 zi() { unfunction z zi; source ~/.cache/sh-init/zoxide.zsh 2>/dev/null; zi "$@"; }
 _step "zoxide"
 
-# --- Ghost text: sugiere el comando del historial mientras escribis. --------
-# En gris despues del cursor; flecha derecha acepta. Antes de atuin.
-[ -s ~/.local/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] \
-  && source ~/.local/share/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
-
 # --- atuin: FLECHA ARRIBA y Ctrl+R abren el buscador de historial. ----------
 source ~/.cache/sh-init/atuin.zsh 2>/dev/null
 _step "atuin"
@@ -92,8 +87,6 @@ __cmd_update() {
   cp "$repo"/zshrc       ~/.zshrc        2>/dev/null
   cp "$repo"/VERSION     ~/.config/cmd/VERSION 2>/dev/null
   rm -f ~/.cache/sh-init/omp.zsh   # regenera el cache del prompt
-  # ghost text: lo clona la 1ra vez que actualizas (equipos que ya estaban instalados)
-  [ -d ~/.local/share/zsh-autosuggestions ] || git clone -q --depth 1 https://github.com/zsh-users/zsh-autosuggestions ~/.local/share/zsh-autosuggestions 2>/dev/null
   return 0
 }
 __cmd_changelog() {

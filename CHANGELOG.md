@@ -1,3 +1,6 @@
+## 1.8.1
+- Se quito el ghost text (bash-autosuggestions): crasheaba. Vuelve el input normal
+
 ## 1.8.0
 - Ghost text: mientras escribis, te sugiere en gris el comando del historial que
   coincide. Flecha derecha (o End) acepta; Alt+Right acepta una palabra. En bash es

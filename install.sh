@@ -112,18 +112,6 @@ pkg_install  fzf      fzf      junegunn.fzf          fzf      fzf         fzf   
 pkg_install  fd       fd       sharkdp.fd            fd       fd-find     fd-find  fd    # busqueda rapida de carpetas
 hash -r 2>/dev/null  # refresca para que los shims recien instalados se vean
 
-# Ghost text del historial mientras escribis (estilo fish): en bash es
-# bash-autosuggestions (liviano, un archivo, NO reemplaza readline); en zsh es
-# zsh-autosuggestions. Se clonan a ~/.local/share y el rc los carga si existen.
-mkdir -p ~/.local/share
-if [ "$OS" = "macos" ]; then
-  [ -d ~/.local/share/zsh-autosuggestions ] && skip "zsh-autosuggestions" \
-    || { git clone -q --depth 1 https://github.com/zsh-users/zsh-autosuggestions ~/.local/share/zsh-autosuggestions 2>/dev/null && ok "zsh-autosuggestions"; }
-else
-  [ -d ~/.local/share/bash-autosuggestions ] && skip "bash-autosuggestions" \
-    || { git clone -q --depth 1 https://github.com/yogeek/bash-autosuggestions ~/.local/share/bash-autosuggestions 2>/dev/null && ok "bash-autosuggestions (ghost text)"; }
-fi
-
 # WezTerm: en Windows usamos el NIGHTLY (el estable de scoop es viejo y NO tiene
 # el blur Acrylic). En Mac/Linux el paquete normal ya es reciente.
 if have wezterm; then skip "wezterm"
