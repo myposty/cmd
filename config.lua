@@ -52,6 +52,11 @@ return {
   confirm_close = true,        -- preguntar al cerrar si hay un proceso corriendo
   scrollback_lines = 10000,    -- cuantas lineas de historial guarda la terminal
 
+  -- ==== IDIOMA ==============================================================
+  -- Idioma de los textos de la UI (ej. el dialogo de "cerrar ventana?").
+  -- "es" = espanol | "en" = ingles | "auto" = detectar del sistema.
+  language = "es",
+
   -- ==== SHELL (Windows) =====================================================
   -- Ruta al shell. En Windows: Git Bash. En Mac/Linux: dejalo en nil.
   windows_shell = "C:/Program Files/Git/bin/bash.exe",

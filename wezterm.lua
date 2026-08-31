@@ -18,6 +18,27 @@ end
 local user = load_lua("config") or {}
 local themes = load_lua("themes")  -- nil si no se pudo cargar
 
+-- --- Idioma para los textos de la UI (ej. confirmar cierre) ------------------
+-- Windows deja LANG vacio, asi que el idioma se elige en config.lua (language).
+-- "auto" intenta detectarlo del entorno; si no puede, usa ingles.
+local lang_pref = (user.language or "auto"):lower()
+local is_es
+if lang_pref == "es" then is_es = true
+elseif lang_pref == "en" then is_es = false
+else
+  local sys_lang = (os.getenv("LANG") or os.getenv("LANGUAGE") or os.getenv("LC_ALL") or ""):lower()
+  is_es = sys_lang:find("es") == 1
+end
+local L = is_es and {
+  close_title = "  Cerrar esta ventana?",
+  close_yes = "  Si, cerrar",
+  close_no = "  No, volver",
+} or {
+  close_title = "  Close this window?",
+  close_yes = "  Yes, close",
+  close_no = "  No, go back",
+}
+
 -- Valores por defecto: si config.lua no define algo, se usa esto.
 local function default(v, d) if v == nil then return d else return v end end
 user.theme        = default(user.theme, "indigo")
@@ -95,14 +116,31 @@ config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = user.hide_tabs_when_single
 config.tab_bar_at_bottom = user.tabs_at_bottom
 
--- --- Confirmacion al cerrar -------------------------------------------------
+-- --- Confirmacion al cerrar (en el IDIOMA del sistema) ----------------------
+-- WezTerm tiene "Really kill this window?" HARDCODEADO en ingles, no se traduce.
+-- Solucion: apagamos la confirmacion nativa y mostramos la nuestra, que SI
+-- podemos escribir en espanol/ingles segun el idioma detectado arriba.
+config.window_close_confirmation = "NeverPrompt"
+
 if user.confirm_close then
-  config.window_close_confirmation = "AlwaysPrompt"
-  config.skip_close_confirmation_for_processes_named = {
-    "bash", "sh", "zsh", "fish", "cmd.exe", "pwsh.exe", "powershell.exe",
-  }
-else
-  config.window_close_confirmation = "NeverPrompt"
+  wezterm.on("window-close-requested", function(window, pane)
+    -- Si solo hay un shell inactivo, cerrar directo (sin molestar).
+    local procs = pane and pane:get_foreground_process_name() or ""
+    procs = procs:lower()
+    local idle = procs:find("bash") or procs:find("\\sh") or procs:find("zsh")
+              or procs:find("cmd.exe") or procs:find("powershell") or procs:find("pwsh")
+    if idle then return true end  -- deja cerrar sin preguntar
+
+    -- Hay un proceso corriendo -> preguntamos en el idioma del sistema.
+    window:perform_action(wezterm.action.InputSelector({
+      title = L.close_title,
+      choices = { { id = "yes", label = L.close_yes }, { id = "no", label = L.close_no } },
+      action = wezterm.action_callback(function(win, _, id, _)
+        if id == "yes" then win:perform_action(wezterm.action.QuitApplication, win:active_pane()) end
+      end),
+    }), pane)
+    return false  -- cancelamos el cierre nativo; decide nuestro dialogo
+  end)
 end
 
 -- --- Rendimiento ------------------------------------------------------------
