@@ -209,23 +209,34 @@ if [ -t 0 ]; then
     s|S|y|Y)
       case "$OS" in
         windows)
-          # Windows 11: el "terminal predeterminado" se guarda en el registro.
-          # Apuntamos la delegacion de consola al wezterm-gui instalado.
-          wt=""
-          for p in "$HOME/scoop/apps/wezterm-nightly/current/wezterm-gui.exe" \
-                   "$HOME/scoop/apps/wezterm/current/wezterm-gui.exe"; do
-            [ -f "$p" ] && { wt="$p"; break; }
-          done
-          if [ -n "$wt" ]; then
-            wt_win=$(cygpath -w "$wt" 2>/dev/null || echo "$wt")
-            # Registra WezTerm como app de consola por defecto (Startup > Default terminal).
-            reg add "HKCU\\Console\\%%Startup" /v DelegationConsole /t REG_SZ /d "{2EACA947-7F5F-4CFA-BA87-8F7FBEEFBE69}" /f >/dev/null 2>&1
-            reg add "HKCU\\Console\\%%Startup" /v DelegationTerminal /t REG_SZ /d "{E12CFF52-A866-4C77-9A90-F570A7AA2C6B}" /f >/dev/null 2>&1
-            ok "WezTerm marcado. Si Windows no lo respeta, ponelo a mano:"
-            echo "     Configuracion > Privacidad > Para desarrolladores > Terminal > WezTerm"
-            echo "     (o en WezTerm: no todas las builds registran el GUID; el paso manual es 1 click)"
+          # El WezTerm PORTABLE (scoop) NO aparece en la lista de "terminal por
+          # defecto" de Windows: solo las apps instaladas por MSI se registran
+          # como proveedor de consola. Asi que reinstalamos por MSI.
+          if [ -d "$HOME/scoop/apps/wezterm-nightly" ] || [ -d "$HOME/scoop/apps/wezterm" ]; then
+            say "Tenes el WezTerm portable (scoop); para ser terminal por defecto hace falta el MSI."
+            printf '    Reinstalo WezTerm con el instalador oficial (MSI)? [s/N] '
+            read -r msi
+            case "$msi" in
+              s|S|y|Y)
+                say "Descargando WezTerm MSI (setup oficial)..."
+                url="https://github.com/wez/wezterm/releases/download/nightly/WezTerm-nightly-setup.exe"
+                out="$TEMP/WezTerm-setup.exe"
+                if curl -fsSL --max-time 120 "$url" -o "$out" 2>/dev/null; then
+                  say "Ejecutando el instalador (segui los pasos en pantalla)..."
+                  "$out" //quiet 2>/dev/null || "$out"  # el MSI se registra solo como terminal
+                  ok "WezTerm instalado por MSI. Ahora aparece en:"
+                  echo "     Configuracion > Privacidad y seguridad > Para desarrolladores >"
+                  echo "     Terminal > eleji 'WezTerm'."
+                  echo "   Opcional: podes quitar el portable con  scoop uninstall wezterm-nightly"
+                else
+                  err "No pude descargar el MSI. Bajalo a mano: https://wezterm.org/install/windows.html"
+                fi ;;
+              *) echo "   Sigo con el portable. No sera terminal por defecto de Windows." ;;
+            esac
           else
-            err "No encontre wezterm-gui para registrar"
+            # No hay portable; suponemos que ya tiene el MSI o lo instalara.
+            echo "   Para ponerlo por defecto: Configuracion > Privacidad > Para"
+            echo "   desarrolladores > Terminal > WezTerm."
           fi ;;
         macos)
           echo "   En macOS no hay 'terminal por defecto' del sistema como en Windows."
