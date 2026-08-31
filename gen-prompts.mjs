@@ -40,20 +40,35 @@ function mix(a, b, t) {
 // ANSI base = indices 4..11 (0=black 1=red 2=green 3=yellow 4=blue 5=magenta 6=cyan 7=white)
 function paletteFor(t) {
   const a = t.ansi, bg = t.bg, fg = t.fg;
-  const blue = a[8], green = a[6], yellow = a[7], red = a[5], magenta = a[9];
+  // El COLOR DE MARCA del tema = su cursor (o el azul ansi). Es el acento principal.
+  const brand = t.cursor || a[8] || mix(bg, fg, 0.35);
+  // Colores semanticos, PERO suavizados hacia el fondo para que no chillen.
+  const soft = (c) => mix(c, bg, 0.25);           // acerca el color al fondo (mate)
+  const green  = soft(a[6] || "#7fbf7f");
+  const yellow = soft(a[7] || "#d9b95c");
+  const red    = soft(a[5] || "#c46b6b");
+  // Fondos base: un gris coherente derivado del fondo del tema (mismo para OS/hora).
+  const base   = mix(bg, fg, 0.14);
+  const baseHi = mix(bg, fg, 0.22);
   return {
-    "indigo-darkest": mix(bg, "#000000", 0.1),
-    "indigo-dark":    mix(bg, fg, 0.10),
-    "indigo-mid":     blue || mix(bg, fg, 0.20),   // path -> azul del tema
-    "indigo":         mix(bg, fg, 0.14),
-    "indigo-light":   green || mix(bg, fg, 0.25),  // git limpio -> verde del tema
-    "violet-muted":   yellow || magenta,            // git con cambios -> amarillo
-    "amber-muted":    mix(bg, fg, 0.14),
-    "danger":         red,                          // error -> rojo del tema
-    "text-light":     fg,
-    "text-dark":      bg,
-    "line":           blue || mix(bg, fg, 0.3),
+    // Todos los fondos "neutros" comparten el mismo tono base -> se ven UNIFORMES.
+    "indigo-darkest": mix(bg, "#000000", 0.15),  // status (fondo oscuro)
+    "indigo-dark":    base,                       // OS
+    "indigo-mid":     baseHi,                     // path (un poco mas claro, jerarquia)
+    "indigo":         base,                       // lenguajes
+    "indigo-light":   soft(brand),                // git limpio -> el color de marca, suavizado
+    "violet-muted":   yellow,                     // git con cambios -> amarillo mate
+    "amber-muted":    base,                       // execution time
+    "danger":         red,                        // error -> rojo mate
+    "text-light":     fg,                         // texto claro sobre fondos oscuros
+    "text-dark":      textOnLight(soft(brand), fg, bg), // texto sobre el fondo de marca
+    "line":           soft(brand),                // las lineas ╰─ / ─╯ en color de marca
   };
+}
+// Elige texto claro u oscuro segun el brillo del fondo (para que siempre se lea).
+function textOnLight(bgHex, light, dark) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(bgHex.slice(i, i + 2), 16));
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? dark : light;
 }
 
 const outDir = path.join(__dirname, "prompts");

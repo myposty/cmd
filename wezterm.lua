@@ -206,10 +206,13 @@ local function apply_theme(win, th, name)
   win:set_config_overrides(ov)
   -- Escribe el tema activo donde el .bashrc lo lee, asi el prompt cambia tambien.
   -- io.open falla silencioso en Windows; run_child_process con cmd SI escribe.
-  -- "echo x>file" sin espacio antes de > para no guardar un espacio de mas.
   if name then
     local target = home:gsub("/", "\\") .. "\\.cache\\cmd-theme"
     wezterm.background_child_process({ "cmd", "/c", "echo|set /p=" .. name .. ">" .. target })
+    -- Refresca el prompt YA: manda Enter en una linea vacia para que oh-my-posh
+    -- redibuje con el tema nuevo, sin tener que escribir un comando a mano.
+    local pane = win:active_pane()
+    if pane then pane:send_text("\n") end
   end
 end
 
