@@ -1,3 +1,8 @@
+## 1.2.0
+- Panel de comandos al abrir: ves que podes ejecutar de un vistazo
+- Comando `help`: muestra la lista completa de comandos y atajos
+- Changelog al actualizar: te muestra que trae cada version nueva
+
 ## 1.1.0
 - El prompt ahora cambia de color con el tema (Ctrl+Shift+. para ciclar)
 - 12 temas: indigo, dracula, catppuccin, nord, tokyo-night, gruvbox y mas
