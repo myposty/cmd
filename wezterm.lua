@@ -194,7 +194,7 @@ local function toggle_blur()
   end)
 end
 
--- Aplica un tema a la ventana (usado por el picker y el preview en vivo).
+-- Aplica un tema a la ventana (usado por el picker y el ciclado en vivo).
 local function apply_theme(win, th)
   local ov = win:get_config_overrides() or {}
   ov.colors = {
@@ -204,6 +204,27 @@ local function apply_theme(win, th)
     ansi = th.ansi, brights = th.brights,
   }
   win:set_config_overrides(ov)
+end
+
+-- Lista ordenada de nombres de temas (para ciclar).
+local _theme_names = {}
+if themes then
+  for n, _ in pairs(themes) do table.insert(_theme_names, n) end
+  table.sort(_theme_names)
+end
+local _theme_idx = 1
+
+-- Cicla al tema siguiente/anterior y lo APLICA EN VIVO. Como InputSelector no
+-- tiene preview al navegar, esto es mejor: ves cada tema en la terminal COMPLETA.
+-- Ctrl+Shift+Derecha = siguiente, Ctrl+Shift+Izquierda = anterior.
+local function cycle_theme(dir)
+  return wezterm.action_callback(function(window, _)
+    if #_theme_names == 0 then return end
+    _theme_idx = ((_theme_idx - 1 + dir) % #_theme_names) + 1
+    local name = _theme_names[_theme_idx]
+    apply_theme(window, themes[name])
+    window:toast_notification("WezTerm", "Tema: " .. name .. "  (" .. _theme_idx .. "/" .. #_theme_names .. ")", nil, 1200)
+  end)
 end
 
 -- Menu de temas CON VISTA PREVIA de la paleta (Ctrl+Shift+P).
@@ -301,8 +322,10 @@ config.keys = {
   -- PANEL DE CONTROL EN VIVO (teclas simples, sin combinaciones raras):
   { key = "F12", action = adjust_opacity(0.05) },   -- mas opaco
   { key = "F11", action = adjust_opacity(-0.05) },  -- mas transparente
+  { key = "F10", action = cycle_theme(1) },         -- tema SIGUIENTE (aplica en vivo)
+  { key = "F9",  action = cycle_theme(-1) },        -- tema ANTERIOR (aplica en vivo)
   { key = "b", mods = "CTRL|SHIFT", action = toggle_blur() },      -- blur on/off
-  { key = "p", mods = "CTRL|SHIFT", action = theme_picker() },     -- menu de temas
+  { key = "p", mods = "CTRL|SHIFT", action = theme_picker() },     -- menu de temas (con paleta)
   { key = "0", mods = "CTRL|SHIFT", action = act.ResetFontSize },  -- resetear zoom
 }
 
