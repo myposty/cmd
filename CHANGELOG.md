@@ -1,3 +1,6 @@
+## 1.3.0
+- Tema nuevo: Monokai Dark Soda (verde lima, magenta, naranja)
+
 ## 1.2.0
 - Panel de comandos al abrir: ves que podes ejecutar de un vistazo
 - Comando `help`: muestra la lista completa de comandos y atajos

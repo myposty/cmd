@@ -13,6 +13,15 @@ return {
     tab_active = "#4B4B7A", tab_inactive = "#2E2E4A",
   },
 
+  -- Monokai Dark Soda: fondo oscuro azulado + verde lima, magenta, naranja.
+  ["monokai-soda"] = {
+    foreground = "#C9C7CD", background = "#191919",
+    cursor = "#F92672", selection = "#343434",
+    ansi    = { "#1A1A1A", "#F4005F", "#98E024", "#FD971F", "#9D65FF", "#F92672", "#58D1EB", "#C4C5B5" },
+    brights = { "#625E4C", "#F4005F", "#98E024", "#E0D561", "#9D65FF", "#F92672", "#58D1EB", "#F6F6EF" },
+    tab_active = "#F92672", tab_inactive = "#252525",
+  },
+
   -- ==== Estilo oh-my-posh (colores clasicos de sus temas) ==================
   -- Paradox: el powerline clasico, azul + verde + naranja.
   ["omp-paradox"] = {
