@@ -7,6 +7,27 @@
 [ -z "$USER" ] && export USER=$(id -un)
 [ -z "$LANG" ] && export LANG=en_US.UTF-8
 
+# --- Splash de bienvenida: barra de carga al abrir (solo terminal interactiva) --
+if [[ $- == *i* ]]; then
+  _splash() {
+    local msg="abriendo terminalsito Uwu :3 <3"
+    local bar_len=24 i filled empty
+    # Colores indigo (mismos del tema).
+    local C=$'\e[38;5;104m' D=$'\e[38;5;60m' R=$'\e[0m' P=$'\e[38;5;176m'
+    printf '\n  %s%s%s\n\n' "$P" "$msg" "$R"
+    for ((i=0; i<=bar_len; i++)); do
+      filled=$(printf '%*s' "$i" '' | tr ' ' '#')
+      empty=$(printf '%*s' "$((bar_len-i))" '' | tr ' ' '-')
+      printf '\r  %s[%s%s%s%s]%s %d%%' "$C" "$filled" "$D" "$empty" "$C" "$R" "$(( i*100/bar_len ))"
+      sleep 0.015
+    done
+    printf '\n'
+    sleep 0.1
+    clear  # limpia para que el prompt quede prolijo
+  }
+  _splash
+fi
+
 # --- PROMPT (oh-my-posh): unica cosa que corre al abrir. Cache ya generado. --
 # Si el cache no existe (primera vez / borraste el cache), lo regenera esa vez.
 [ -s ~/.cache/sh-init/omp.sh ] || oh-my-posh init bash --print --config "$HOME/.config/oh-my-posh/indigo-mate.omp.json" > ~/.cache/sh-init/omp.sh 2>/dev/null
