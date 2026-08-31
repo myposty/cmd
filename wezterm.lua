@@ -59,6 +59,13 @@ config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = true
 config.tab_bar_at_bottom = true
 
+-- Confirmacion al cerrar: pregunta SOLO si hay un proceso real corriendo.
+-- Si la terminal esta libre (solo el shell), cierra directo sin molestar.
+config.window_close_confirmation = "AlwaysPrompt"
+config.skip_close_confirmation_for_processes_named = {
+  "bash", "sh", "zsh", "fish", "cmd.exe", "pwsh.exe", "powershell.exe",
+}
+
 -- ============================================================================
 --  Rendimiento.
 -- ============================================================================
