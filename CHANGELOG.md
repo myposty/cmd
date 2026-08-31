@@ -1,3 +1,6 @@
+## 1.8.2
+- Bump de version para verificar el sistema de auto-update (sin cambios de codigo)
+
 ## 1.8.1
 - Se quito el ghost text (bash-autosuggestions): crasheaba. Vuelve el input normal
 
