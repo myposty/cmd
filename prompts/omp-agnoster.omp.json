@@ -1,17 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
   "palette": {
-    "indigo-darkest": "#1D2733",
-    "indigo-dark": "#5F87D7",
-    "indigo-mid": "#5FD7D7",
+    "indigo-dark": "#87AFFF",
+    "indigo-mid": "#87FFFF",
+    "indigo-light": "#87FF87",
+    "violet-muted": "#FFD787",
     "indigo": "#AF5FD7",
-    "indigo-light": "#5FD75F",
-    "violet-muted": "#D7AF5F",
-    "amber-muted": "#AF5FD7",
+    "amber-muted": "#D7AF5F",
     "danger": "#FF5F5F",
-    "text-light": "#FFFFFF",
-    "text-dark": "#1D2733",
-    "line": "#5F87D7"
+    "indigo-darkest": "#1D2733",
+    "line": "#779ae0",
+    "seg-git-dirty": "#ffd98d",
+    "seg-git-danger": "#ff9f9f",
+    "seg-git-ahead": "#d3a7e9",
+    "seg-status-error": "#bf4747"
   },
   "blocks": [
     {
@@ -19,7 +21,7 @@
       "segments": [
         {
           "background": "p:indigo-dark",
-          "foreground": "p:text-light",
+          "foreground": "#1D2733",
           "leading_diamond": "╭─",
           "style": "diamond",
           "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
@@ -27,7 +29,7 @@
         },
         {
           "background": "p:indigo-mid",
-          "foreground": "p:text-light",
+          "foreground": "#1D2733",
           "powerline_symbol": "",
           "options": {
             "home_icon": "~",
@@ -40,12 +42,12 @@
         {
           "background": "p:indigo-light",
           "background_templates": [
-            "{{ if or (.Working.Changed) (.Staging.Changed) }}p:violet-muted{{ end }}",
-            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:danger{{ end }}",
-            "{{ if gt .Ahead 0 }}p:indigo{{ end }}",
-            "{{ if gt .Behind 0 }}p:indigo{{ end }}"
+            "{{ if or (.Working.Changed) (.Staging.Changed) }}p:seg-git-dirty{{ end }}",
+            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:seg-git-danger{{ end }}",
+            "{{ if gt .Ahead 0 }}p:seg-git-ahead{{ end }}",
+            "{{ if gt .Behind 0 }}p:seg-git-ahead{{ end }}"
           ],
-          "foreground": "p:text-dark",
+          "foreground": "#1D2733",
           "powerline_symbol": "",
           "options": {
             "branch_icon": " ",
@@ -64,7 +66,7 @@
       "segments": [
         {
           "background": "p:indigo",
-          "foreground": "p:text-light",
+          "foreground": "#FFFFFF",
           "invert_powerline": true,
           "powerline_symbol": "",
           "options": {
@@ -76,7 +78,7 @@
         },
         {
           "background": "p:indigo",
-          "foreground": "p:text-light",
+          "foreground": "#FFFFFF",
           "invert_powerline": true,
           "powerline_symbol": "",
           "options": {
@@ -88,7 +90,7 @@
         },
         {
           "background": "p:indigo",
-          "foreground": "p:text-light",
+          "foreground": "#FFFFFF",
           "invert_powerline": true,
           "powerline_symbol": "",
           "options": {
@@ -101,7 +103,7 @@
         },
         {
           "background": "p:amber-muted",
-          "foreground": "p:text-light",
+          "foreground": "#1D2733",
           "invert_powerline": true,
           "powerline_symbol": "",
           "style": "powerline",
@@ -111,9 +113,9 @@
         {
           "background": "p:indigo-darkest",
           "background_templates": [
-            "{{ if gt .Code 0 }}p:danger{{ end }}"
+            "{{ if gt .Code 0 }}p:seg-status-error{{ end }}"
           ],
-          "foreground": "p:text-light",
+          "foreground": "#FFFFFF",
           "invert_powerline": true,
           "powerline_symbol": "",
           "options": {
@@ -125,7 +127,7 @@
         },
         {
           "background": "p:indigo-light",
-          "foreground": "p:text-dark",
+          "foreground": "#1D2733",
           "invert_powerline": true,
           "style": "diamond",
           "template": " {{ .CurrentDate | date .Format }}  ",
@@ -140,7 +142,7 @@
       "newline": true,
       "segments": [
         {
-          "foreground": "p:line",
+          "foreground": "#779ae0",
           "style": "plain",
           "template": "╰─",
           "type": "text"
@@ -151,7 +153,7 @@
     {
       "segments": [
         {
-          "foreground": "p:line",
+          "foreground": "#779ae0",
           "style": "plain",
           "template": "─╯",
           "type": "text"
