@@ -1,3 +1,9 @@
+## 1.6.0
+- macOS (zsh) a paridad con Windows/Linux: mismo prompt, medidor RAM/CPU en vivo,
+  cambio de tema en vivo, cd inteligente, Ctrl+F, help y auto-update
+- Soporte oficial: Linux (bash), macOS (zsh), Windows con Git Bash. En Windows se
+  usa Git Bash siempre (no hay soporte de PowerShell)
+
 ## 1.5.0
 - El check va VERDE si el comando salio bien, ROJO si fallo (con el codigo de error)
 - La hora y el tiempo de ejecucion tienen colores propios y distintivos
