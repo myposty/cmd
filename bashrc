@@ -7,44 +7,48 @@
 [ -z "$USER" ] && export USER=$(id -un)
 [ -z "$LANG" ] && export LANG=en_US.UTF-8
 
-# --- Splash de bienvenida: barra de carga al abrir (solo terminal interactiva) --
+# --- Splash DINAMICO: la barra avanza con la carga REAL de cada plugin -------
+# No es un tiempo fijo: cada `_step` se llama cuando ESE componente termino de
+# cargar de verdad. Si algo tarda mas, la barra espera ahi; si va rapido, vuela.
 if [[ $- == *i* ]]; then
-  _splash() {
-    local msg="abriendo terminalsito Uwu :3 <3"
-    local bar_len=24 i filled empty
-    # Colores indigo (mismos del tema).
-    local C=$'\e[38;5;104m' D=$'\e[38;5;60m' R=$'\e[0m' P=$'\e[38;5;176m'
-    printf '\n  %s%s%s\n\n' "$P" "$msg" "$R"
-    for ((i=0; i<=bar_len; i++)); do
-      filled=$(printf '%*s' "$i" '' | tr ' ' '#')
-      empty=$(printf '%*s' "$((bar_len-i))" '' | tr ' ' '-')
-      printf '\r  %s[%s%s%s%s]%s %d%%' "$C" "$filled" "$D" "$empty" "$C" "$R" "$(( i*100/bar_len ))"
-      sleep 0.015
-    done
-    printf '\n'
-    sleep 0.1
-    clear  # limpia para que el prompt quede prolijo
+  _SPLASH_TOTAL=4 _SPLASH_DONE=0
+  _splash_start() {
+    _C=$'\e[38;5;104m'; _D=$'\e[38;5;60m'; _R=$'\e[0m'; _P=$'\e[38;5;176m'
+    printf '\n  %sabriendo terminalsito Uwu :3 <3%s\n\n' "$_P" "$_R"
   }
-  _splash
+  _step() {  # $1 = nombre de lo que acaba de cargar
+    _SPLASH_DONE=$((_SPLASH_DONE+1))
+    local len=24 f=$(( _SPLASH_DONE*len/_SPLASH_TOTAL ))
+    local filled=$(printf '%*s' "$f" '' | tr ' ' '#')
+    local empty=$(printf '%*s' "$((len-f))" '' | tr ' ' '-')
+    printf '\r  %s[%s%s%s%s]%s %3d%%  %s%-18s%s' \
+      "$_C" "$filled" "$_D" "$empty" "$_C" "$_R" "$(( _SPLASH_DONE*100/_SPLASH_TOTAL ))" "$_D" "$1" "$_R"
+  }
+  _splash_end() { printf '\n'; clear; unset -f _splash_start _step _splash_end; }
+  _splash_start
 fi
+# Helper no-op si no hay splash (shell no interactivo), para no romper las llamadas.
+type -t _step >/dev/null 2>&1 || _step() { :; }
 
-# --- PROMPT (oh-my-posh): unica cosa que corre al abrir. Cache ya generado. --
-# Si el cache no existe (primera vez / borraste el cache), lo regenera esa vez.
+# --- PROMPT (oh-my-posh) -----------------------------------------------------
 [ -s ~/.cache/sh-init/omp.sh ] || oh-my-posh init bash --print --config "$HOME/.config/oh-my-posh/indigo-mate.omp.json" > ~/.cache/sh-init/omp.sh 2>/dev/null
 source ~/.cache/sh-init/omp.sh 2>/dev/null
+_step "prompt"
 
 # --- Historial grande, sin duplicados. --------------------------------------
 export HISTSIZE=50000 HISTFILESIZE=50000 HISTCONTROL=ignoreboth:erasedups
 shopt -s histappend
+_step "historial"
 
 # --- zoxide (lazy): se carga la primera vez que usas `z` o `zi`. -------------
 z()  { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; z "$@"; }
 zi() { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; zi "$@"; }
+_step "zoxide"
 
 # --- atuin: FLECHA ARRIBA y Ctrl+R abren el buscador de historial. ----------
-# Se carga entero al abrir (necesario para que capture flecha-arriba desde el
-# primer comando). atuin regenera su cache con --disable-up-arrow quitado.
 source ~/.cache/sh-init/atuin.sh 2>/dev/null
+_step "atuin"
+type -t _splash_end >/dev/null 2>&1 && _splash_end
 
 # --- `cd` INTELIGENTE -------------------------------------------------------
 # Escribi "cd nombre":
