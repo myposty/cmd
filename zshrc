@@ -51,33 +51,8 @@ else
 fi
 _step "prompt"
 
-# --- CPU en el PROMPT (snapshot por comando), SIN daemon --------------------
-# Un daemon en background muere al cerrar la pestana y deja el numero congelado.
-# En su lugar: el CPU del prompt es el % de uso ENTRE comandos (delta de
-# /proc/stat en Linux; instantaneo con ps en macOS, que no tiene /proc). RAM en
-# el prompt va nativa (oh-my-posh sysinfo). El medidor EN VIVO vive en la barra
-# de WezTerm, que lee /proc por su cuenta cada segundo (ver wezterm.lua).
-case "$(uname -m 2>/dev/null)" in
-  x86_64|amd64|aarch64|arm64) export POSH_CPU_ICON=$'\U000F0EE0' ;;  # 64-bit (md-cpu_64_bit)
-  *)                          export POSH_CPU_ICON=$'\U000F0EDF' ;;  # 32-bit (md-cpu_32_bit)
-esac
-_posh_cpu() {
-  if [ -r /proc/stat ]; then                                  # Linux: delta entre comandos
-    local _ r idle total x pf=~/.cache/posh-cpu-prev pidle ptotal dt di
-    read -r _ r < /proc/stat; set -- ${=r}; idle=$4; total=0; for x in "$@"; do total=$((total+x)); done
-    if [ -f "$pf" ]; then
-      read -r pidle ptotal < "$pf" 2>/dev/null
-      dt=$((total-${ptotal:-0})); di=$((idle-${pidle:-0}))
-      [ "$dt" -gt 0 ] && export POSH_CPU=$(( (100*(dt-di))/dt ))
-    fi
-    echo "$idle $total" > "$pf" 2>/dev/null
-  else                                                        # macOS: instantaneo con ps
-    local ncpu; ncpu=$(sysctl -n hw.ncpu 2>/dev/null || echo 1)
-    export POSH_CPU="$(ps -A -o %cpu 2>/dev/null | awk -v n="$ncpu" 'NR>1{s+=$1} END{if(n>0)printf "%d",s/n}')"
-  fi
-}
-typeset -ga precmd_functions
-(( ${precmd_functions[(I)_posh_cpu]} )) || precmd_functions+=(_posh_cpu)
+# RAM/CPU/bateria en vivo viven en la barra de WezTerm (ver wezterm.lua). El
+# prompt ya no los muestra, asi que aca no se mide nada.
 
 # --- Historial grande, sin duplicados. --------------------------------------
 export HISTSIZE=50000 SAVEHIST=50000 HISTFILE="$HOME/.zsh_history"

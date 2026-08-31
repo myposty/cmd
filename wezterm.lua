@@ -202,6 +202,16 @@ if user.sys_meter then
     local parts = {}
     if ram then table.insert(parts, "RAM " .. ram .. "%") end
     if cpu then table.insert(parts, "CPU " .. cpu .. "%") end
+    -- Bateria via API nativa de WezTerm (vacia en PC de mesa -> no se muestra).
+    local batt = wezterm.battery_info()
+    if batt and #batt > 0 then
+      local b = batt[1]
+      local pct = math.floor((b.state_of_charge or 0) * 100 + 0.5)
+      local icon = utf8.char(0xF0079)                                  -- bateria
+      if b.state == "Charging" or b.state == "Full" then icon = utf8.char(0xF0084)  -- enchufada
+      elseif pct <= 15 then icon = utf8.char(0xF0083) end              -- baja
+      table.insert(parts, icon .. " " .. pct .. "%")
+    end
     table.insert(parts, os.date("%H:%M:%S"))
     window:set_right_status(wezterm.format({
       { Foreground = { Color = t.foreground } },

@@ -1,3 +1,9 @@
+## 1.7.0
+- RAM, CPU y bateria ahora viven SOLO en la barra de WezTerm (en vivo, cambian
+  solos). El prompt de arriba se simplifico: dejo el check, el tiempo de ejecucion
+  y el reloj. La bateria de la barra usa la API nativa de WezTerm (rayito si esta
+  enchufada, alerta si esta baja)
+
 ## 1.6.2
 - Fix: en el primer arranque algunos colores salian transparentes (el check, la
   bateria) hasta reseleccionar un tema. El cache del prompt se generaba desde el

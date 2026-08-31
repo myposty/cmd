@@ -53,29 +53,8 @@ else
 fi
 _step "prompt"
 
-# --- CPU en el PROMPT (snapshot por comando) --------------------------------
-# SIN daemon (un daemon en Windows muere al cerrar la pestana que lo arranco y
-# deja el numero congelado). El CPU del prompt es el % de uso ENTRE un comando y
-# el anterior: delta de /proc/stat guardando la muestra previa en un archivo. No
-# hay sleep -> no frena el Enter. RAM en el prompt va nativa (oh-my-posh sysinfo).
-# El medidor EN VIVO (que cambia estando quieto) vive en la barra de WezTerm, que
-# lee /proc por su cuenta cada segundo (ver wezterm.lua).
-case "$(uname -m 2>/dev/null)" in
-  x86_64|amd64|aarch64|arm64) export POSH_CPU_ICON=$'\U000F0EE0' ;;  # 64-bit (md-cpu_64_bit)
-  *)                          export POSH_CPU_ICON=$'\U000F0EDF' ;;  # 32-bit (md-cpu_32_bit)
-esac
-_posh_cpu() {
-  [ -r /proc/stat ] || return
-  local _ r idle total x pf=~/.cache/posh-cpu-prev pidle ptotal dt di
-  read -r _ r < /proc/stat; set -- $r; idle=$4; total=0; for x in "$@"; do total=$((total+x)); done
-  if [ -f "$pf" ]; then
-    read -r pidle ptotal < "$pf" 2>/dev/null
-    dt=$((total-${ptotal:-0})); di=$((idle-${pidle:-0}))
-    [ "$dt" -gt 0 ] && export POSH_CPU=$(( (100*(dt-di))/dt ))
-  fi
-  echo "$idle $total" > "$pf" 2>/dev/null
-}
-case ":$PROMPT_COMMAND:" in *:_posh_cpu:*) ;; *) PROMPT_COMMAND="_posh_cpu${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;; esac
+# RAM/CPU/bateria en vivo viven en la barra de WezTerm (ver wezterm.lua). El
+# prompt ya no los muestra, asi que aca no se mide nada.
 
 # --- Historial grande, sin duplicados. --------------------------------------
 export HISTSIZE=50000 HISTFILESIZE=50000 HISTCONTROL=ignoreboth:erasedups

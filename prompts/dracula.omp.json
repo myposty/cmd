@@ -14,9 +14,7 @@
     "seg-git-dirty": "#ffffaa",
     "seg-git-danger": "#ffaaaa",
     "seg-git-ahead": "#ff9bd4",
-    "seg-status-error": "#ffaaaa",
-    "seg-battery-low": "#ffaaaa",
-    "seg-battery-mid": "#f2fa92"
+    "seg-status-error": "#ffaaaa"
   },
   "blocks": [
     {
@@ -87,24 +85,6 @@
           "template": " {{ if gt .Code 0 }} {{ reason .Code }}{{ else }}{{ end }} "
         },
         {
-          "type": "sysinfo",
-          "style": "powerline",
-          "invert_powerline": true,
-          "powerline_symbol": "",
-          "background": "p:indigo",
-          "foreground": "#282A36",
-          "template": " RAM {{ round .PhysicalPercentUsed 0 }}% "
-        },
-        {
-          "type": "session",
-          "style": "powerline",
-          "invert_powerline": true,
-          "powerline_symbol": "",
-          "background": "p:indigo-mid",
-          "foreground": "#282A36",
-          "template": "{{ if .Env.POSH_CPU }} {{ .Env.POSH_CPU_ICON }} {{ .Env.POSH_CPU }}% {{ end }}"
-        },
-        {
           "type": "executiontime",
           "style": "powerline",
           "invert_powerline": true,
@@ -128,18 +108,6 @@
             "fetch_version": true
           },
           "template": "  {{ .Full }} "
-        },
-        {
-          "type": "battery",
-          "style": "powerline",
-          "invert_powerline": true,
-          "powerline_symbol": "",
-          "background": "p:ok",
-          "foreground": "#282A36",
-          "template": "{{ if not .Error }} {{ if eq \"Discharging\" .State.String }}{{ if le .Percentage 15 }}󰂃{{ else }}󰁹{{ end }}{{ else }}󰂄{{ end }} {{ .Percentage }}% {{ end }}",
-          "background_templates": [
-            "{{ if le .Percentage 30 }}p:seg-battery-low{{ else if le .Percentage 60 }}p:seg-battery-mid{{ end }}"
-          ]
         },
         {
           "type": "time",
