@@ -64,13 +64,32 @@ Edit **`~/config.lua`** — the only file you need to touch. Save it and press
 
 | Option | Values | What it does |
 |---|---|---|
-| `theme` | `indigo`, `catppuccin`, `dracula`, `tokyo-night`, `gruvbox` | Color scheme |
-| `opacity` | `0.7`–`1.0` | Window transparency (lower = more glass) |
-| `win_backdrop` | `Acrylic`, `Mica`, `Disable` | Windows 11 blur effect |
+| `theme` | 12 themes (see below) | Color scheme |
+| `opacity` | `0.5`–`1.0` | Window transparency (lower = more glass) |
+| `win_backdrop` | `Acrylic`, `Mica`, `Disable` | Windows 11 blur (needs WezTerm nightly) |
 | `mac_blur` | `0`–`30` | macOS background blur |
 | `font`, `font_size`, `line_height` | — | Typography |
+| `font_ligatures` | `true`/`false` | Font ligatures (FiraCode, JetBrains) |
 | `window_buttons` | `true`/`false` | Titlebar min/max/close buttons |
+| `tabs_at_bottom`, `hide_tabs_when_single`, `padding` | — | Window chrome |
 | `confirm_close` | `true`/`false` | Ask before closing when a process runs |
+| `scrollback_lines` | number | History lines kept in the terminal |
+
+**Themes** (`theme = "..."`): `indigo`, `omp-paradox`, `omp-agnoster`,
+`omp-atomic`, `catppuccin`, `catppuccin-latte`, `dracula`, `tokyo-night`,
+`gruvbox`, `nord`, `rose-pine`, `everforest`.
+
+### Live controls (no file editing)
+
+| Keys | Action |
+|---|---|
+| `Alt+Shift+↑` / `↓` | Opacity up / down |
+| `Ctrl+Shift+B` | Toggle blur |
+| `Ctrl+Shift+P` | Theme picker menu |
+| `Ctrl+Shift+0` | Reset font zoom |
+| `Ctrl+Shift+R` | Reload config.lua |
+
+Live changes are per-session; edit `config.lua` to make them permanent.
 
 Adding a theme: copy a block in `~/themes.lua`, change the hex colors, name it,
 then set `theme = "<name>"` in `config.lua`.
