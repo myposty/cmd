@@ -1,3 +1,9 @@
+## 1.8.5
+- WezTerm arranca bash con `-i` (interactiva) en vez de `-l` (login). En Windows no
+  hay sesion madre, asi que cada pestana pagaba /etc/profile (aliases, git-prompt,
+  perl, lang) sin usarlo. Con `-i` bash lee ~/.bashrc directo (donde vive toda la
+  config; ~/.bash_profile solo lo source-aba). Arranque: ~0.75s -> ~0.57s
+
 ## 1.8.4
 - Arranque mas rapido y sin "cargando": se quito el splash (la barra gastaba ~400ms
   en forks de `tr`, 2 por paso x 4 pasos, solo para dibujarse) y el `clear` que le

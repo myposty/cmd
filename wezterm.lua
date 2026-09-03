@@ -59,8 +59,13 @@ user.scrollback_lines = default(user.scrollback_lines, 10000)
 user.windows_shell    = default(user.windows_shell, "C:/Program Files/Git/bin/bash.exe")
 
 -- --- Shell (solo Windows; Mac/Linux usan el del sistema) --------------------
+-- `-i` (interactiva), NO `-l` (login). En Windows no hay una "sesion madre":
+-- cada pestana seria login desde cero y pagaria ~460ms de /etc/profile (aliases,
+-- git-prompt, perl, lang...) que esta terminal no usa. Con `-i` bash lee tu
+-- ~/.bashrc directo, que es donde vive TODA tu config (tu ~/.bash_profile solo
+-- hace `source ~/.bashrc`, asi que no perdes nada tuyo).
 if wezterm.target_triple:find("windows") and user.windows_shell then
-  config.default_prog = { user.windows_shell, "-l" }
+  config.default_prog = { user.windows_shell, "-i" }
 end
 
 -- --- Fuente -----------------------------------------------------------------
