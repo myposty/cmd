@@ -40,13 +40,21 @@ __settheme() {
   local f="$HOME/.config/oh-my-posh/prompts/$t.omp.json"
   [ -s "$f" ] || f="$HOME/.config/oh-my-posh/prompts/indigo.omp.json"   # fallback con paleta completa (NO el template)
   echo "$t" > ~/.cache/cmd-theme 2>/dev/null                       # recuerda el tema
-  eval "$(oh-my-posh init bash --config "$(cygpath -w "$f")")"     # RECARGA REAL
+  # Reconstruye el prompt Y reescribe el cache (--print, igual que install.sh).
+  # Asi la PROXIMA terminal source-a el cache (~50ms) en vez de correr
+  # oh-my-posh en vivo (700-2000ms). Sirve para CUALQUIER tema, no solo indigo.
+  mkdir -p ~/.cache/sh-init 2>/dev/null
+  oh-my-posh init bash --print --config "$(cygpath -w "$f")" > ~/.cache/sh-init/omp.sh 2>/dev/null
+  source ~/.cache/sh-init/omp.sh 2>/dev/null                      # RECARGA REAL
 }
 
 # Al abrir la terminal: usar el ultimo tema elegido (o indigo). El cache rapido
 # sirve para indigo; para otro tema se re-inicializa (una vez, al abrir).
 _startup_theme=$(cat ~/.cache/cmd-theme 2>/dev/null | tr -d ' \r\n\t'); : "${_startup_theme:=indigo}"
-if [ "$_startup_theme" = "indigo" ] && [ -s ~/.cache/sh-init/omp.sh ]; then
+# Camino rapido para CUALQUIER tema: el cache omp.sh ya corresponde al ultimo
+# tema elegido (lo escribe __settheme). Si falta (primer arranque o post-update
+# que lo borra), __settheme lo reconstruye una vez y lo deja listo para las demas.
+if [ -s ~/.cache/sh-init/omp.sh ]; then
   source ~/.cache/sh-init/omp.sh 2>/dev/null
 else
   __settheme "$_startup_theme"

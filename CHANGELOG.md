@@ -1,3 +1,9 @@
+## 1.8.3
+- Fix de arranque lento: el cache del prompt (omp.sh) se borraba en cada update y
+  nunca se regeneraba, asi que cada terminal corria oh-my-posh en vivo (~700-2000ms).
+  Ahora __settheme reescribe el cache al armar el prompt, y el camino rapido lo usa
+  para CUALQUIER tema (antes solo indigo). Resultado: ~60ms por terminal en vez de segundos
+
 ## 1.8.2
 - Bump de version para verificar el sistema de auto-update (sin cambios de codigo)
 
