@@ -1,3 +1,9 @@
+## 1.8.4
+- Arranque mas rapido y sin "cargando": se quito el splash (la barra gastaba ~400ms
+  en forks de `tr`, 2 por paso x 4 pasos, solo para dibujarse) y el `clear` que le
+  seguia. El panel "Que podes hacer" ya no sale en cada terminal: queda una linea
+  que invita a escribir `help`. Resultado: el login de WezTerm paso de ~1.3s a ~0.75s
+
 ## 1.8.3
 - Fix de arranque lento: el cache del prompt (omp.sh) se borraba en cada update y
   nunca se regeneraba, asi que cada terminal corria oh-my-posh en vivo (~700-2000ms).

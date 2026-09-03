@@ -7,28 +7,10 @@
 [ -z "$USER" ] && export USER=$(id -un)
 [ -z "$LANG" ] && export LANG=en_US.UTF-8
 
-# --- Splash DINAMICO: la barra avanza con la carga REAL de cada plugin -------
-# No es un tiempo fijo: cada `_step` se llama cuando ESE componente termino de
-# cargar de verdad. Si algo tarda mas, la barra espera ahi; si va rapido, vuela.
-if [[ $- == *i* ]]; then
-  _SPLASH_TOTAL=4 _SPLASH_DONE=0
-  _splash_start() {
-    _C=$'\e[38;5;104m'; _D=$'\e[38;5;60m'; _R=$'\e[0m'; _P=$'\e[38;5;176m'
-    printf '\n  %sabriendo terminalsito Uwu :3 <3%s\n\n' "$_P" "$_R"
-  }
-  _step() {  # $1 = nombre de lo que acaba de cargar
-    _SPLASH_DONE=$((_SPLASH_DONE+1))
-    local len=24 f=$(( _SPLASH_DONE*len/_SPLASH_TOTAL ))
-    local filled=$(printf '%*s' "$f" '' | tr ' ' '#')
-    local empty=$(printf '%*s' "$((len-f))" '' | tr ' ' '-')
-    printf '\r  %s[%s%s%s%s]%s %3d%%  %s%-18s%s' \
-      "$_C" "$filled" "$_D" "$empty" "$_C" "$_R" "$(( _SPLASH_DONE*100/_SPLASH_TOTAL ))" "$_D" "$1" "$_R"
-  }
-  _splash_end() { printf '\n'; clear; unset -f _splash_start _step _splash_end; }
-  _splash_start
-fi
-# Helper no-op si no hay splash (shell no interactivo), para no romper las llamadas.
-type -t _step >/dev/null 2>&1 || _step() { :; }
+# Sin splash: la barra "cargando" gastaba ~400ms en forks de `tr` (2 por paso, 4
+# pasos) SOLO para dibujarse, y encima ES lo que se ve cargar. La terminal ahora
+# arranca directo al prompt. Lo que tarda de verdad (oh-my-posh, atuin) es el piso
+# real de esas herramientas, no un adorno.
 
 # --- PROMPT (oh-my-posh) — cambia de tema con recarga REAL -------------------
 # oh-my-posh carga su config UNA vez por sesion; cambiar POSH_CONFIG a mitad NO
@@ -59,7 +41,6 @@ if [ -s ~/.cache/sh-init/omp.sh ]; then
 else
   __settheme "$_startup_theme"
 fi
-_step "prompt"
 
 # RAM/CPU/bateria en vivo viven en la barra de WezTerm (ver wezterm.lua). El
 # prompt ya no los muestra, asi que aca no se mide nada.
@@ -68,17 +49,13 @@ _step "prompt"
 export HISTSIZE=50000 HISTFILESIZE=50000 HISTCONTROL=ignoreboth:erasedups
 export HISTIGNORE="__settheme*:__cmd_update*:__cmd_changelog*"   # comandos internos: NO ensucian el historial
 shopt -s histappend
-_step "historial"
 
 # --- zoxide (lazy): se carga la primera vez que usas `z` o `zi`. -------------
 z()  { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; z "$@"; }
 zi() { unset -f z zi; source ~/.cache/sh-init/zoxide.sh 2>/dev/null; zi "$@"; }
-_step "zoxide"
 
 # --- atuin: FLECHA ARRIBA y Ctrl+R abren el buscador de historial. ----------
 source ~/.cache/sh-init/atuin.sh 2>/dev/null
-_step "atuin"
-type -t _splash_end >/dev/null 2>&1 && _splash_end
 
 # --- AUTO-UPDATE (no frena el arranque) -------------------------------------
 # Es UPDATE, no install: git pull en donde clonaste + reconstruye los prompts +
@@ -168,18 +145,9 @@ help() {
   printf '    %sCtrl+Shift+B%s   activa / desactiva el blur\n' "$K" "$R"
   printf '  %sTip: escribi %shelp%s%s cuando quieras volver a ver esto.%s\n\n' "$D" "$K" "$R" "$D" "$R"
 }
-if [[ $- == *i* ]]; then
-  _k=$'\e[38;5;109m'; _a=$'\e[38;5;66m'; _d=$'\e[38;5;245m'; _r=$'\e[0m'
-  # cada linea: el comando con un EJEMPLO + que hace, en criollo. Clave alineada.
-  _row() { printf '   %s%-16s%s %s→%s %s%s%s\n' "$_k" "$1" "$_r" "$_a" "$_r" "$_d" "$2" "$_r"; }
-  printf '%s  Que podes hacer:%s\n' "$_a" "$_r"
-  _row "cd fuse"      "entra a la carpeta \"fuse\" aunque no sepas donde esta"
-  _row "z fuse"       "salto rapido a una carpeta que ya visitaste antes"
-  _row "Ctrl+R"       "busca un comando que ya escribiste (tu historial)"
-  _row "Ctrl+Shift+." "cambia el tema de colores de la terminal"
-  _row "help"         "ver la lista completa de comandos y atajos"
-  printf '\n'
-fi
+# El panel "Que podes hacer" ya NO sale en cada arranque (era ruido y sumaba al
+# tiempo percibido). Queda una linea sola, sin forks: escribi `help` para verlo.
+[[ $- == *i* ]] && printf '\e[38;5;245m  escribi \e[38;5;180mhelp\e[38;5;245m para ver comandos y atajos\e[0m\n'
 
 # --- `cd` INTELIGENTE -------------------------------------------------------
 # Escribi "cd nombre":
