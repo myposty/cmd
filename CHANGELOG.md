@@ -1,3 +1,13 @@
+## 1.8.6
+- Fix crash de WezTerm en Windows: al renderizar TUIs con muchos glifos (claude,
+  fzf) WezTerm hacia fallback por las fuentes del sistema y DirectWrite (dwrote)
+  paniqueaba, cerrando la ventana. Ahora usa `font_locator = "ConfigDirsOnly"` con
+  la Nerd Font en `~/.config/wezterm/fonts` (el install la copia ahi): no toca la
+  coleccion del sistema, no hay panic.
+- Revert de 1.8.5: bash vuelve a `-l` (login). El `-i` salteaba /etc/profile pero
+  eso no exportaba TMPDIR/MINGW_PREFIX y rompia el entorno MSYS. El arranque rapido
+  se sostiene igual por el cache del prompt y el splash removido (1.8.3 / 1.8.4).
+
 ## 1.8.5
 - WezTerm arranca bash con `-i` (interactiva) en vez de `-l` (login). En Windows no
   hay sesion madre, asi que cada pestana pagaba /etc/profile (aliases, git-prompt,

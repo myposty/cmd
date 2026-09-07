@@ -161,7 +161,19 @@ case "$OS" in
       else err "Nerd Font (abri una terminal nueva y corre: oh-my-posh font install CascadiaCode)"; fi
     else
       [ -d ~/scoop/apps/CascadiaCode-NF ] && skip "Nerd Font" || scoop install CascadiaCode-NF >/dev/null 2>&1 && ok "Nerd Font"
-    fi ;;
+    fi
+    # WezTerm en Windows usa font_locator=ConfigDirsOnly (ver wezterm.lua): NO lee
+    # las fuentes del sistema (una fuente corrupta hace paniquear a DirectWrite y
+    # cierra la ventana con TUIs como claude/fzf). Por eso la Nerd Font tiene que
+    # estar en esta carpeta dedicada. La copiamos desde donde haya quedado instalada.
+    mkdir -p ~/.config/wezterm/fonts
+    for _src in ~/AppData/Local/Microsoft/Windows/Fonts ~/scoop/apps/CascadiaCode-NF/current /c/Windows/Fonts; do
+      [ -d "$_src" ] && cp "$_src"/CaskaydiaCove*.ttf ~/.config/wezterm/fonts/ 2>/dev/null
+    done
+    case $(echo ~/.config/wezterm/fonts/*.ttf) in
+      *'*.ttf') err "Nerd Font no copiada a ~/.config/wezterm/fonts" ;;
+      *) ok "Nerd Font -> WezTerm font dir" ;;
+    esac ;;
   macos)   brew list --cask font-caskaydia-cove-nerd-font >/dev/null 2>&1 && skip "Nerd Font" || { brew tap homebrew/cask-fonts >/dev/null 2>&1; brew install --cask font-caskaydia-cove-nerd-font >/dev/null 2>&1 && ok "Nerd Font"; } ;;
   linux)
     if fc-list 2>/dev/null | grep -qi "CaskaydiaCove"; then skip "Nerd Font"

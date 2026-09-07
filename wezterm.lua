@@ -59,16 +59,25 @@ user.scrollback_lines = default(user.scrollback_lines, 10000)
 user.windows_shell    = default(user.windows_shell, "C:/Program Files/Git/bin/bash.exe")
 
 -- --- Shell (solo Windows; Mac/Linux usan el del sistema) --------------------
--- `-i` (interactiva), NO `-l` (login). En Windows no hay una "sesion madre":
--- cada pestana seria login desde cero y pagaria ~460ms de /etc/profile (aliases,
--- git-prompt, perl, lang...) que esta terminal no usa. Con `-i` bash lee tu
--- ~/.bashrc directo, que es donde vive TODA tu config (tu ~/.bash_profile solo
--- hace `source ~/.bashrc`, asi que no perdes nada tuyo).
+-- `-l` (login), NO `-i`. Se probo `-i` para saltear /etc/profile (~180ms) pero
+-- ROMPE: /etc/profile es lo que exporta TMPDIR / ORIGINAL_TMP / MINGW_PREFIX y
+-- demas del entorno MSYS. Sin esas, las apps que escriben temporales (claude,
+-- que es Node; fzf) mueren y se llevan la terminal. 180ms no valen eso.
 if wezterm.target_triple:find("windows") and user.windows_shell then
-  config.default_prog = { user.windows_shell, "-i" }
+  config.default_prog = { user.windows_shell, "-l" }
 end
 
 -- --- Fuente -----------------------------------------------------------------
+-- WORKAROUND crash de WezTerm en Windows: al hacer fallback de glifos, WezTerm
+-- enumera la coleccion de fuentes del sistema via DirectWrite (dwrote), y una
+-- fuente del sistema corrupta lo hace PANIQUEAR y cerrar toda la ventana (pasa
+-- con TUIs llenas de glifos: claude, fzf). Con ConfigDirsOnly, WezTerm usa SOLO
+-- las fuentes de esta carpeta (tu Nerd Font, copiada por el install) y NO toca
+-- la coleccion del sistema -> no hay panic. Solo Windows; Mac/Linux no lo sufren.
+if wezterm.target_triple:find("windows") then
+  config.font_dirs = { wezterm.home_dir .. "/.config/wezterm/fonts" }
+  config.font_locator = "ConfigDirsOnly"
+end
 config.font = wezterm.font_with_fallback({ user.font, "Cascadia Mono" })
 config.font_size = user.font_size
 config.line_height = user.line_height
